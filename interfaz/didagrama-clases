@@ -1,0 +1,166 @@
+classDiagram
+    class Usuario {
+        # String id
+        # String nombre
+        # String email
+        # String contraseña
+        +login(email: String, contraseña: String): bool
+        +recuperarContraseña(email: String, contraseña: String): string
+    }
+
+    class Administrador {
+        +registrarVehiculo(vehiculo: Vehiculo): void
+        +registrarConductor(conductor: Conductor): void
+        +definirRuta(ruta: Ruta): void
+        +asignarConductorAVehiculo(conductor: Conductor, vehiculo: Vehiculo, fechaInicio: Date, fechaFin: Date): AsignacionConductor
+        +generarReporte(fechaInicio: string, fechaFin: string): Reporte
+        +gestionarAlertas(alerta: AlertaRuta): void
+    }
+
+    class Conductor {
+        - String licencia
+        - String telefono
+        - float sueldo
+        - bool disponible
+        +aceptarViaje(viaje: Viaje): void
+        +finalizarViaje(viaje: Viaje): void
+        +reportarIncidencia(descripcion: String): EventoOperacion
+        +verHistorial(): List~HistorialRecorrido~
+    }
+
+    Usuario <|-- Administrador
+    Usuario <|-- Conductor
+
+
+
+    class Vehiculo {
+        - String id
+        - String placa
+        - String modelo
+        - int capacidad
+        - float kilometraje
+        - EstadoVehiculo estadoActual
+        +cambiarEstado(nuevoEstado: EstadoVehiculo): void
+        +asignarConductor(conductor: Conductor, fechaInicio: Date, fechaFin: Date): AsignacionConductor
+        +obtenerUbicacionActual(): UbicacionGPS
+    }
+
+    class EstadoVehiculo {
+        <<enumeration>>
+        DISPONIBLE
+        EN_RUTA
+        EN_MANTENIMIENTO
+    }
+
+    class Ruta {
+        - String id
+        - String nombre
+        - List~PuntoGeo~ puntosDeRuta
+        - float distanciaTotal
+        - Duration duracionEstimada
+        +calcularDesviacion(ubicacion: UbicacionGPS): float
+        +obtenerSiguientePunto(ubicacionActual: UbicacionGPS): PuntoGeo
+    }
+
+    class Viaje {
+        - String id
+        - Date fechaHoraInicio
+        - Date fechaHoraFin
+        - EstadoViaje 
+        +iniciar(): void
+        +finalizar(): void
+        +registrarEvento(evento: EventoOperacion): void
+        +calcularDuracionReal(): Duration
+        +generarAlerta(tipo: TipoAlerta, mensaje: String): AlertaRuta
+    }
+        class Reporte {
+        - Date fechaGeneracion
+        - Date fechaInicio
+        - Date fechaFin
+        - List~Viaje~ viajesRealizados
+        - float kmTotales
+        - float tiempoTotalViajes
+        - int totalAlertas
+        - float eficienciaPromedio
+        +generarPDF(): void
+        +exportarCSV(): void
+        +calcularEficiencia(): float
+    }
+    Administrador *-- Reporte
+    Reporte o-- Viaje 
+     Administrador <-- Conductor
+      Administrador <-- Vehiculo
+
+
+    class UbicacionGPS {
+        - String idViaje
+        - Date timestamp
+        - float latitud
+        - float longitud
+        - float velocidad
+        +estaEnRuta(ruta: Ruta, tolerancia: float): bool
+    }
+
+    class AlertaRuta {
+        - String id
+        - TipoAlerta tipo
+        - Date timestamp
+        - String mensaje
+        - bool resuelta
+        +resolver(): void
+    }
+
+    class HistorialRecorrido {
+        - String idViaje
+        - List~UbicacionGPS~ ubicaciones
+        - List~EventoOperacion~ eventos
+        - List~AlertaRuta~ alertas
+        - float kmRecorridos
+        - Duration tiempoTotal
+        +calcularMetricas(): Map
+        +exportar(): void
+    }
+
+    class AsignacionConductor {
+        - String id
+        - Date fechaInicio
+        - Date fechaFin
+        +activar(): void
+        +finalizar(): void
+    }
+
+    class EventoOperacion {
+        - String id
+        - Date timestamp
+        - TipoEvento tipo
+        - String descripcion
+    }
+
+
+
+
+    Vehiculo "1" --> "1" EstadoVehiculo : estado actual
+    Vehiculo "1" --> "0..*" Viaje : realiza
+    Vehiculo "1" --> "0..*" AsignacionConductor : tiene
+
+    Conductor "1" --> "0..*" Viaje : conduce
+    Conductor "1" --> "0..*" AsignacionConductor : participa
+
+    Ruta "1" --> "0..*" Viaje : usada en
+
+    Viaje "1" --> "1" Vehiculo : utiliza
+    Viaje "1" --> "1" Conductor : asignado a
+    Viaje "1" --> "1" Ruta : sigue
+    Viaje "1" --> "0..*" UbicacionGPS : genera
+    Viaje "1" --> "0..*" EventoOperacion : registra
+    Viaje "1" --> "0..*" AlertaRuta : dispara
+    Viaje "1" --> "1" HistorialRecorrido : posee
+    UbicacionGPS "1" --o "1" HistorialRecorrido 
+    AlertaRuta "1" --o "1" HistorialRecorrido
+    EventoOperacion "1" --o "1" HistorialRecorrido 
+
+
+
+    AsignacionConductor "0..*" --> "1" Conductor : pertenece a
+    AsignacionConductor "0..*" --> "1" Vehiculo : asignado a
+
