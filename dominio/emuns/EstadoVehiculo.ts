@@ -1,0 +1,6 @@
+export enum EstadoVehiculo {
+    DISPONIBLE = "DISPONIBLE",
+    EN_VIAJE = "EN_VIAJE",
+    MANTENIMIENTO = "MANTENIMIENTO",
+    FUERA_DE_SERVICIO = "FUERA_DE_SERVICIO"
+}

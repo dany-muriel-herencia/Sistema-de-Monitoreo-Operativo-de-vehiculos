@@ -1,0 +1,1 @@
+Proyecto Flutter (opcional) — carpeta placeholder para la app móvil en Dart.
