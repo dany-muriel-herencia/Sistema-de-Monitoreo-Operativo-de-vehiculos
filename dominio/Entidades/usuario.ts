@@ -1,23 +1,29 @@
-export class usuario{
-    private id : number;
-    private nombre : string;
-    private email : string;
-    private contraseña : string;
+export class usuario {
+    private id: number;
+    private nombre: string;
+    private email: string;
+    private contraseña: string;
 
-    constructor(id : number, nombre : string, email : string, contraseña : string){
+    constructor(id: number, nombre: string, email: string, contraseña: string) {
         this.id = id;
         this.nombre = nombre;
         this.email = email;
         this.contraseña = contraseña;
-    } 
-    login (email:string ,contrasena:string): boolean{
-        if(this.email === email && this.contraseña === contrasena){
-            return true;
-        }        
-        return false;
-    }
-    recuperarContraseña (email:string ,contrasena:string): void{
-        ////falta copmpletar 
     }
 
+    login(email: string, contrasena: string): boolean {
+        return this.email === email && this.contraseña === contrasena;
+    }
+
+    recuperarContraseña(email: string, nuevaContrasena: string): void {
+        if (this.email !== email) {
+            throw new Error("Email no coincide con el usuario");
+        }
+        this.contraseña = nuevaContrasena;
+    }
+
+    // ── Getters (usados por Conductor, Administracion y Repositorios) ─
+    getId(): number { return this.id; }
+    getNombre(): string { return this.nombre; }
+    getEmail(): string { return this.email; }
 }

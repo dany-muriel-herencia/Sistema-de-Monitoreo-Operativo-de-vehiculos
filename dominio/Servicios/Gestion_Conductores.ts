@@ -1,1 +1,1 @@
-import { Conductor } from "../Entidades/Conductor";
+import { Conductor } from "../Entidades/Conductor.js";

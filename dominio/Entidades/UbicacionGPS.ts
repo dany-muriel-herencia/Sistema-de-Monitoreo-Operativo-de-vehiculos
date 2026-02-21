@@ -1,20 +1,34 @@
 import { Ruta } from "./Ruta.js";
 
 export class UbicacionGPS {
-    private idviaje :string ;
-    //private date : timestate;
-    private latitud : number;
-    private longitud : number;
-    private fechaHora : Date;
+    private idviaje: string;
+    private latitud: number;
+    private longitud: number;
+    private velocidad: number;   // km/h, 0 si no se mide
+    private fechaHora: Date;
 
-    constructor(idviaje : string, latitud : number, longitud : number, fechaHora : Date) {
+    constructor(idviaje: string, latitud: number, longitud: number, fechaHora: Date, velocidad: number = 0) {
         this.idviaje = idviaje;
         this.latitud = latitud;
         this.longitud = longitud;
         this.fechaHora = fechaHora;
+        this.velocidad = velocidad;
     }
-    estaEnRuta(ruta : Ruta , tolerancia : number ) : boolean {
-        // Logic to determine if this UbicacionGPS is part of a given ruta
-        return false; // Placeholder return value
+
+    /**
+     * Verifica si esta ubicación está dentro de la ruta,
+     * con una tolerancia en metros (ej: 50 metros).
+     * Usa calcularDesviacion() de la Ruta → Haversine en PuntoGeo.
+     */
+    estaEnRuta(ruta: Ruta, tolerancia: number): boolean {
+        const desviacion = ruta.calcularDesviacion(this);
+        return desviacion <= tolerancia;
     }
+
+    // ── Getters ─────────────────────────────────────────────────
+    getIdViaje(): string { return this.idviaje; }
+    getLatitud(): number { return this.latitud; }
+    getLongitud(): number { return this.longitud; }
+    getVelocidad(): number { return this.velocidad; }
+    getFechaHora(): Date { return this.fechaHora; }
 }

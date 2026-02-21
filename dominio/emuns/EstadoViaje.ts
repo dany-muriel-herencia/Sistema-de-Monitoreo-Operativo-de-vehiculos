@@ -1,0 +1,6 @@
+export enum EstadoViaje {
+    PLANIFICADO = "PLANIFICADO",
+    EN_CURSO = "EN_CURSO",
+    FINALIZADO = "FINALIZADO",
+    CANCELADO = "CANCELADO"
+}

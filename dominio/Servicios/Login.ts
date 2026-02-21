@@ -1,7 +1,7 @@
 
 
 import * as readline from "readline";
-import { usuario  } from "../Entidades/usuario.ts";
+import { usuario } from "../Entidades/usuario.js";
 
 
 const rl = readline.createInterface({
