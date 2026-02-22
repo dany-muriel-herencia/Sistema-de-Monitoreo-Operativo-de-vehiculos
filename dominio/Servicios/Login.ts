@@ -1,7 +1,7 @@
 
 
 import * as readline from "readline";
-import { usuario } from "../Entidades/usuario.js";
+import { usuario } from "../Entidades/usuario";
 
 
 const rl = readline.createInterface({
@@ -11,8 +11,8 @@ const rl = readline.createInterface({
 
 // Simulación de "base de datos" en memoria
 const usuarios: usuario[] = [
-  new usuario(1, "Admin", "admin@example.com", "1234"),
-  new usuario(2, "Conductor", "conductor@example.com", "abcd")
+  new usuario("1", "Admin", "admin@example.com", "1234"),
+  new usuario("2", "Conductor", "conductor@example.com", "abcd")
 ];
 
 function menu() {

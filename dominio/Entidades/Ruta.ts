@@ -3,14 +3,14 @@ import { Duracion } from "./Duracion.js";
 import { UbicacionGPS } from "./UbicacionGPS.js";
 
 export class Ruta {
-    private id: number;
+    private id: string;
     private nombre: string;
     private puntos: PuntoGeo[];
     private distanciaTotal: number;
     private duracionEstimada: Duracion;
 
     constructor(
-        id: number,
+        id: string,
         nombre: string,
         distanciaTotal: number,
         duracionEstimada: Duracion,
@@ -33,7 +33,7 @@ export class Ruta {
 
         // Convertir la ubicación en un PuntoGeo temporal para usar Haversine
         const puntoActual = new PuntoGeo(
-            -1,
+            "-1",
             ubicacion.getLatitud(),
             ubicacion.getLongitud(),
             -1,
@@ -57,7 +57,7 @@ export class Ruta {
         if (this.puntos.length === 0) return null;
 
         const puntoActual = new PuntoGeo(
-            -1,
+            "-1",
             ubicacionActual.getLatitud(),
             ubicacionActual.getLongitud(),
             -1,
@@ -83,7 +83,7 @@ export class Ruta {
     }
 
     // ── Getters ─────────────────────────────────────────────────
-    getId(): number { return this.id; }
+    getId(): string { return this.id; }
     getNombre(): string { return this.nombre; }
     getPuntos(): PuntoGeo[] { return this.puntos; }
     getDistanciaTotal(): number { return this.distanciaTotal; }

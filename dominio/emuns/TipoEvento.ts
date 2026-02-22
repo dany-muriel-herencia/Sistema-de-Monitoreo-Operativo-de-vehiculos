@@ -1,18 +1,15 @@
 export enum TipoEvento {
-    DesviacionRuta = "Desviacion de Ruta",
-    DetencionProlongada = "Detención Prolongada",
-    ExcesoVelocidad = "Exceso de Velocidad",
-    ParadaNoProgramada = "Parada No Programada",
-    IncidenteMecanico = "Incidente Mecánico",
-    CondicionesClimaticasAdversas = "Condiciones Climáticas Adversas",
-    ComportamientoConductor = "Comportamiento del Conductor",
-    EmergenciaMedica = "Emergencia Médica",
-    
+    DESVIACION_RUTA = "Desviacion de Ruta",
+    DETENCION_PROLONGADA = "Detención Prolongada",
+    EXCESO_VELOCIDAD = "Exceso de Velocidad",
+    PARADA_NO_PROGRAMADA = "Parada No Programada",
+    INCIDENTE_MECANICO = "Incidente Mecánico",
+    CONDICIONES_CLIMATICAS_ADVERSAS = "Condiciones Climáticas Adversas",
+    COMPORTAMIENTO_CONDUCTOR = "Comportamiento del Conductor",
+    EMERGENCIA_MEDICA = "Emergencia Médica",
     INICIO_RUTA = "INICIO_RUTA",
     FIN_RUTA = "FIN_RUTA",
-    FALLA_MECANICA = "FALLA_MECANICA",
-    EXCESO_VELOCIDAD = "EXCESO_VELOCIDAD",
     EMERGENCIA = "EMERGENCIA",
-    Otro = "Otro"
-
+    FALLA_MECANICA = "FALLA_MECANICA",
+    OTRO = "Otro"
 }

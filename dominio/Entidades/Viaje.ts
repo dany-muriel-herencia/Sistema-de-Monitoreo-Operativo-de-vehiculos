@@ -1,8 +1,8 @@
-import { EventoOperacion } from "./EventoOperacion.js";
-import { AlertaRuta } from "./AlertaRuta.js";
-import { TipoEvento } from "../emuns/TipoEvento.js";
-import { TipoAlerta } from "../emuns/TipoAlerta.js";
-import { EstadoViaje } from "../emuns/EstadoViaje.js";
+import { EventoOperacion } from "./EventoOperacion";
+import { AlertaRuta } from "./AlertaRuta";
+import { TipoEvento } from "../emuns/TipoEvento";
+import { TipoAlerta } from "../emuns/TipoAlerta";
+import { EstadoViaje } from "../emuns/EstadoViaje";
 
 // ─────────────────────────────────────────────────────────────
 //  CLASE VIAJE  –  Entidad del DOMINIO
@@ -19,10 +19,10 @@ import { EstadoViaje } from "../emuns/EstadoViaje.js";
 export class Viaje {
 
     // ── Atributos ──────────────────────────────────────────────
-    private id: number;
-    private idConductor: number;
-    private idVehiculo: number;
-    private idRuta: number;
+    private id: string;
+    private idConductor: string;
+    private idVehiculo: string;
+    private idRuta: string;
     private estado: EstadoViaje;
     private fechaInicio: Date | null;
     private fechaFin: Date | null;
@@ -33,10 +33,10 @@ export class Viaje {
 
     // ── Constructor ────────────────────────────────────────────
     constructor(
-        id: number,
-        idConductor: number,
-        idVehiculo: number,
-        idRuta: number,
+        id: string,
+        idConductor: string,
+        idVehiculo: string,
+        idRuta: string,
         estado: EstadoViaje = EstadoViaje.PLANIFICADO,
         fechaInicio: Date | null = null,
         fechaFin: Date | null = null,
@@ -72,7 +72,7 @@ export class Viaje {
 
         // Registrar evento de inicio
         const evento = new EventoOperacion(
-            0,                          // el id real lo asigna la BD
+            "0",                          // el id real lo asigna la BD
             this.fechaInicio,
             TipoEvento.INICIO_RUTA,
             `Viaje ${this.id} iniciado por conductor ${this.idConductor}`
@@ -95,7 +95,7 @@ export class Viaje {
         this.fechaFin = new Date();
 
         const evento = new EventoOperacion(
-            0,
+            "0",
             this.fechaFin,
             TipoEvento.FIN_RUTA,
             `Viaje ${this.id} finalizado. Duración: ${this.calcularDuracionMinutos()} min`
@@ -119,10 +119,10 @@ export class Viaje {
 
         const ahora = new Date();
 
-        const evento = new EventoOperacion(0, ahora, tipoEvento, descripcion);
+        const evento = new EventoOperacion("0", ahora, tipoEvento, descripcion);
         this.eventos.push(evento);
 
-        const alerta = new AlertaRuta(0, tipoAlerta, descripcion, ahora, false);
+        const alerta = new AlertaRuta("0", tipoAlerta, descripcion, ahora, false);
         this.alertas.push(alerta);
 
         // Retorna ambos objetos para que el Caso de Uso los persista en la BD
@@ -140,9 +140,9 @@ export class Viaje {
         this.estado = EstadoViaje.CANCELADO;
 
         const evento = new EventoOperacion(
-            0,
+            "0",
             new Date(),
-            TipoEvento.Otro,
+            TipoEvento.OTRO,
             `Viaje cancelado: ${motivo}`
         );
         this.eventos.push(evento);
@@ -176,10 +176,10 @@ export class Viaje {
 
     // ── Getters (usados por Repositorios y Casos de Uso) ──────
 
-    getId(): number { return this.id; }
-    getIdConductor(): number { return this.idConductor; }
-    getIdVehiculo(): number { return this.idVehiculo; }
-    getIdRuta(): number { return this.idRuta; }
+    getId(): string { return this.id; }
+    getIdConductor(): string { return this.idConductor; }
+    getIdVehiculo(): string { return this.idVehiculo; }
+    getIdRuta(): string { return this.idRuta; }
     getEstado(): EstadoViaje { return this.estado; }
     getFechaInicio(): Date | null { return this.fechaInicio; }
     getFechaFin(): Date | null { return this.fechaFin; }

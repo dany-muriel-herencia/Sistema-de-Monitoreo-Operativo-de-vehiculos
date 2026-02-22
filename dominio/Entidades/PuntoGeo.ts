@@ -1,11 +1,11 @@
 export class PuntoGeo {
-    private id: number;
+    private id: string;
     private latitud: number;
     private longitud: number;
     private orden: number;
     private descripcion: string;
 
-    constructor(id: number, latitud: number, longitud: number, orden: number, descripcion: string) {
+    constructor(id: string, latitud: number, longitud: number, orden: number, descripcion: string) {
         this.id = id;
         this.latitud = latitud;
         this.longitud = longitud;
@@ -33,7 +33,7 @@ export class PuntoGeo {
     }
 
     // ── Getters ────────────────────────────────────────────────
-    getId(): number { return this.id; }
+    getId(): string { return this.id; }
     getLatitud(): number { return this.latitud; }
     getLongitud(): number { return this.longitud; }
     getOrden(): number { return this.orden; }

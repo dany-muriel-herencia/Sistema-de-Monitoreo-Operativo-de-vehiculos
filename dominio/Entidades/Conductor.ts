@@ -1,8 +1,10 @@
-import { usuario } from "./usuario.js";
-import { Viaje } from "./Viaje.js";
-import { HistorialRecorridos } from "./HistorialRecorridos.js";
-import { TipoEvento } from "../emuns/TipoEvento.js";
-import { TipoAlerta } from "../emuns/TipoAlerta.js";
+import { usuario } from "./usuario";
+import { Viaje } from "./Viaje";
+import { HistorialRecorridos } from "./HistorialRecorridos";
+import { TipoEvento } from "../emuns/TipoEvento";
+import { TipoAlerta } from "../emuns/TipoAlerta";
+import { EventoOperacion } from "./EventoOperacion";
+import { AlertaRuta } from "./AlertaRuta";
 
 // ─────────────────────────────────────────────────────────────
 //  CLASE CONDUCTOR  –  Entidad del DOMINIO  (hereda de usuario)
@@ -69,8 +71,8 @@ export class Conductor extends usuario {
      * → El Caso de Uso persiste ambos objetos en la BD
      */
     reportarIncidencia(viaje: Viaje, descripcion: string): {
-        evento: import("./EventoOperacion.js").EventoOperacion;
-        alerta: import("./AlertaRuta.js").AlertaRuta;
+        evento: EventoOperacion;
+        alerta: AlertaRuta;
     } {
         return viaje.registrarIncidencia(
             TipoEvento.EMERGENCIA,
@@ -94,6 +96,11 @@ export class Conductor extends usuario {
     getSueldo(): number { return this.sueldo; }
     isDisponible(): boolean { return this.disponible; }
     getId(): string { return super.getId(); }
+
+    // ── Setters ─────────────────────────────────────────────────
+    setSueldo(nuevoSueldo: number): void { this.sueldo = nuevoSueldo; }
+    setTelefono(nuevoTel: number): void { this.telefono = nuevoTel; }
+    setLicencia(nuevaLic: string): void { this.licencia = nuevaLic; }
 
     /** Cambia disponibilidad — usado por el Repositorio al hidratar */
     setDisponible(valor: boolean): void { this.disponible = valor; }

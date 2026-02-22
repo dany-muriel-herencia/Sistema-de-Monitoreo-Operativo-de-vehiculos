@@ -1,10 +1,10 @@
 export class usuario {
-    private id: number;
+    private id: string;
     private nombre: string;
     private email: string;
     private contraseña: string;
 
-    constructor(id: number, nombre: string, email: string, contraseña: string) {
+    constructor(id: string, nombre: string, email: string, contraseña: string) {
         this.id = id;
         this.nombre = nombre;
         this.email = email;
@@ -23,7 +23,8 @@ export class usuario {
     }
 
     // ── Getters (usados por Conductor, Administracion y Repositorios) ─
-    getId(): number { return this.id; }
+    getId(): string { return this.id; }
     getNombre(): string { return this.nombre; }
     getEmail(): string { return this.email; }
 }
+

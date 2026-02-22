@@ -15,11 +15,7 @@ export class UbicacionGPS {
         this.velocidad = velocidad;
     }
 
-    /**
-     * Verifica si esta ubicación está dentro de la ruta,
-     * con una tolerancia en metros (ej: 50 metros).
-     * Usa calcularDesviacion() de la Ruta → Haversine en PuntoGeo.
-     */
+
     estaEnRuta(ruta: Ruta, tolerancia: number): boolean {
         const desviacion = ruta.calcularDesviacion(this);
         return desviacion <= tolerancia;

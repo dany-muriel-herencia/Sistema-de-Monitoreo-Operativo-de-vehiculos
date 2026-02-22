@@ -1,5 +1,5 @@
-import { Estado_Vehiculo } from "../emuns/Estado_Vehiculo.js";
-import { AsignacionConductor } from "./AsignacionConductor.js";
+import { Estado_Vehiculo } from "../emuns/Estado_Vehiculo";
+import { AsignacionConductor } from "./AsignacionConductor";
 
 export class Vehiculo {
     private id: string;

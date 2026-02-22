@@ -5,13 +5,13 @@ import { AlertaRuta } from "./AlertaRuta.js";
 import { TipoAlerta } from "../emuns/TipoAlerta.js";
 
 export class HistorialRecorridos {
-    private idViaje: number;
+    private idViaje: string;
     private ubicaciones: UbicacionGPS[];
     private eventos: EventoOperacion[];
     private alertas: AlertaRuta[];
 
     constructor(
-        idViaje: number,
+        idViaje: string,
         ubicaciones: UbicacionGPS[] = [],
         eventos: EventoOperacion[] = [],
         alertas: AlertaRuta[] = []
@@ -78,7 +78,7 @@ export class HistorialRecorridos {
     }
 
     // ── Getters ─────────────────────────────────────────────────
-    getIdViaje(): number { return this.idViaje; }
+    getIdViaje(): string { return this.idViaje; }
     getUbicaciones(): UbicacionGPS[] { return this.ubicaciones; }
     getEventos(): EventoOperacion[] { return this.eventos; }
     getAlertas(): AlertaRuta[] { return this.alertas; }

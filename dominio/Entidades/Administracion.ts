@@ -51,7 +51,7 @@ export class administrador extends usuario {
      * → El Repositorio la persiste con sus puntos_ruta en la BD.
      */
     definirRuta(
-        id: number,
+        id: string,
         nombre: string,
         distanciaKm: number,
         duracionEstimada: Duracion,
