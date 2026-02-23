@@ -21,7 +21,7 @@ export class UbicacionGPS {
         return desviacion <= tolerancia;
     }
 
-
+    
     getIdViaje(): string { return this.idviaje; }
     getLatitud(): number { return this.latitud; }
     getLongitud(): number { return this.longitud; }

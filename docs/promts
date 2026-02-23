@@ -1,0 +1,12 @@
+1.    Explícame cómo estructurar mi proyecto de Sistema de Monitoreo Operativo de Vehículos usando arquitectura por capas (dominio, aplicación e infraestructura) en Node.js con TypeScript.
+
+2.    Muéstrame cómo implementar los repositorios (UsuarioRepository, ConductorRepository y VehiculoRepository) usando MySQL y mysql2 en TypeScript.
+
+3.    Explícame cómo se comunican la interfaz, los casos de uso, el dominio y los repositorios dentro de una arquitectura limpia.
+
+4.    Tengo este error en TypeScript (Argument of type 'string' is not assignable to parameter of type 'number'), ¿cómo lo soluciono correctamente en mis entidades y clases heredadas?
+
+5.    Dame el archivo tsconfig.json correcto para ejecutar mi proyecto Node.js con TypeScript usando ts-node sin errores de módulos
+
+
+    
