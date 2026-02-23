@@ -1,0 +1,155 @@
+import { EventoOperacion } from "./EventoOperacion";
+import { AlertaRuta } from "./AlertaRuta";
+import { TipoEvento } from "../emuns/TipoEvento";
+import { TipoAlerta } from "../emuns/TipoAlerta";
+import { EstadoViaje } from "../emuns/EstadoViaje";
+import { Conductor } from "./Conductor";
+import { Vehiculo } from "./Vehiculo";
+import { Ruta } from "./Ruta";
+
+export class Viaje {
+
+    
+    private id: string;
+    private conductor: Conductor;
+    private vehiculo: Vehiculo;
+    private ruta: Ruta;
+    private estado: EstadoViaje;
+    private fechaInicio: Date | null;
+    private fechaFin: Date | null;
+
+    
+    private eventos: EventoOperacion[];   
+    private alertas: AlertaRuta[];        
+
+
+    constructor(
+        id: string,
+        conductor: Conductor,
+        vehiculo: Vehiculo,
+        ruta: Ruta,
+        estado: EstadoViaje = EstadoViaje.PLANIFICADO,
+        fechaInicio: Date | null = null,
+        fechaFin: Date | null = null,
+        eventos: EventoOperacion[] = [],
+        alertas: AlertaRuta[] = []
+    ) {
+        this.id = id;
+        this.conductor = conductor;
+        this.vehiculo = vehiculo;
+        this.ruta = ruta;
+        this.estado = estado;
+        this.fechaInicio = fechaInicio;
+        this.fechaFin = fechaFin;
+        this.eventos = eventos;
+        this.alertas = alertas;
+    }
+
+    iniciar(): void {
+        if (this.estado !== EstadoViaje.PLANIFICADO) {
+            throw new Error(`No se puede iniciar un viaje en estado: ${this.estado}`);
+        }
+        this.estado = EstadoViaje.EN_CURSO;
+        this.fechaInicio = new Date();
+
+
+        const evento = new EventoOperacion(
+            "0",                         
+            this.fechaInicio,
+            TipoEvento.INICIO_RUTA,
+            `Viaje ${this.id} iniciado por conductor ${this.conductor.getnombre()}`);
+        this.eventos.push(evento);
+    }
+
+
+    finalizar(): void {
+        if (this.estado !== EstadoViaje.EN_CURSO) {
+            throw new Error(`No se puede finalizar un viaje en estado: ${this.estado}`);
+        }
+        this.estado = EstadoViaje.FINALIZADO;
+        this.fechaFin = new Date();
+
+        const evento = new EventoOperacion(
+            "0",
+            this.fechaFin,
+            TipoEvento.FIN_RUTA,
+            `Viaje ${this.id} finalizado. Duración: ${this.calcularDuracionMinutos()} min`
+        );
+        this.eventos.push(evento);
+    }
+
+    registrarIncidencia(tipoEvento: TipoEvento, tipoAlerta: TipoAlerta, descripcion: string): {
+        evento: EventoOperacion;
+        alerta: AlertaRuta;
+    } {
+        if (this.estado !== EstadoViaje.EN_CURSO) {
+            throw new Error("Solo se pueden registrar incidencias en viajes EN_CURSO");
+        }
+
+            const ahora = new Date();
+
+            const evento = new EventoOperacion("0", ahora, tipoEvento, descripcion);
+            this.eventos.push(evento);
+
+            const alerta = new AlertaRuta("0", tipoAlerta, descripcion, ahora, false);
+            this.alertas.push(alerta);
+
+
+        return { evento, alerta };
+    }
+
+
+    cancelar(motivo: string): void {
+        if (this.estado !== EstadoViaje.PLANIFICADO) {
+            throw new Error("Solo se puede cancelar un viaje PLANIFICADO");
+        }
+        this.estado = EstadoViaje.CANCELADO;
+
+        const evento = new EventoOperacion(
+            "0",
+            new Date(),
+            TipoEvento.OTRO,
+            `Viaje cancelado: ${motivo}`
+        );
+        this.eventos.push(evento);
+    }
+
+    
+
+    calcularDuracionMinutos(): number {
+        if (!this.fechaInicio) return 0;
+        const fin = this.fechaFin ?? new Date();
+        const diffMs = fin.getTime() - this.fechaInicio.getTime();
+        return Math.floor(diffMs / 1000 / 60);
+    }
+
+
+    estaEnCurso(): boolean {
+        return this.estado === EstadoViaje.EN_CURSO;
+    }
+
+    
+
+    obtenerAlertasPendientes(): AlertaRuta[] {
+ 
+        return this.alertas.filter(a => !a.estaResuelta());
+ 
+    }
+
+    
+
+    getId(): string { return this.id; }
+    getIdConductor(): string { return this.conductor.getId(); }
+ 
+    getIdVehiculo(): string { return this.vehiculo.getId(); }
+    getIdRuta(): string { return this.ruta.getId(); }
+ 
+    getEstado(): EstadoViaje { return this.estado; }
+ 
+    getFechaInicio(): Date | null { return this.fechaInicio; }
+ 
+    getFechaFin(): Date | null { return this.fechaFin; }
+ 
+    getEventos(): EventoOperacion[] { return this.eventos; }
+    getAlertas(): AlertaRuta[] { return this.alertas; }
+}
