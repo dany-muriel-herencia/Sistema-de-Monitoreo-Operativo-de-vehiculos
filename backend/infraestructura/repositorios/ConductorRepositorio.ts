@@ -1,41 +1,104 @@
 import { IConductorRepositorio } from "../../dominio/Repositorios/IConductorRepositorio";
-import {Conductor} from "../../dominio/Entidades/Conductor";
-import {pool} from "../../db";
+import { Conductor } from "../../dominio/Entidades/Conductor";
+import { pool } from "../../db";
 
+export class ConductorRepositorio implements IConductorRepositorio {
 
-export class Gestion_Conductores {
-    constructor(private repository: IConductorRepositorio) {}
+    async guardar(conductor: Conductor): Promise<void> {
+        const connection = await pool.getConnection();
+        try {
+            await connection.beginTransaction();
 
-    async registrar_Conductor(conductor:Conductor): Promise<void>{
-        if(this.repository.obtenerPorId(conductor.getId())){
-            throw new Error("El conductor ya existe");
+            const [userResult]: any = await connection.query(
+                'INSERT INTO usuarios (nombre, email, contraseña, rol) VALUES (?, ?, ?, ?)',
+                [conductor.getNombre(), conductor.getEmail(), "password_placeholder", 'conductor']
+            );
+            const userId = userResult.insertId;
+
+            await connection.query(
+                'INSERT INTO conductores (usuario_id, licencia, telefono, sueldo,edad, disponible) VALUES (?, ?, ?, ?, ?,?)',
+                [userId, conductor.getLicencia(), conductor.getTelefono(), conductor.getSueldo(),conductor.getEdad(), conductor.EstadoDisponible()]
+            );
+
+            await connection.commit();
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
         }
-        await this.repository.guardar(conductor);
-
     }
 
-    async obtenerConductor(id :string ):Promise<Conductor>{
-        const conductor =await this.repository.obtenerPorId(id);
-        if(!conductor){
-            throw Error("NO hay registros en la base de datos de la oficina de conductores");
+    async obtenerPorId(id: string): Promise<Conductor | null> {
+        const [rows]: any = await pool.query(
+            `SELECT u.id, u.nombre, u.email, u.contraseña, c.licencia, c.telefono, c.sueldo, c.disponible 
+             FROM usuarios u 
+             JOIN conductores c ON u.id = c.usuario_id 
+             WHERE u.id = ?`,
+            [id]
+        );
+
+        if (rows.length === 0) return null;
+
+        const row = rows[0];
+        return new Conductor(
+            row.id.toString(),
+            row.nombre,
+            row.email,
+            row.contraseña,
+            row.licencia,
+            Number(row.telefono),
+            Number(row.sueldo),
+            Number(row.edad),
+            Boolean(row.disponible)
+        );
+    }
+
+    async obtenerTodos(): Promise<Conductor[]> {
+        const [rows]: any = await pool.query(
+            `SELECT u.id, u.nombre, u.email, u.contraseña, c.licencia, c.telefono, c.sueldo, c.disponible 
+             FROM usuarios u 
+             JOIN conductores c ON u.id = c.usuario_id`
+        );
+
+        return rows.map((row: any) => new Conductor(
+            row.id.toString(),
+            row.nombre,
+            row.email,
+            row.contraseña,
+            row.licencia,
+            Number(row.telefono),
+            Number(row.sueldo),
+            Number(row.edad),
+            Boolean(row.disponible)
+        ));
+    }
+
+    async actualizar(conductor: Conductor): Promise<void> {
+        const connection = await pool.getConnection();
+        try {
+            await connection.beginTransaction();
+
+            await connection.query(
+                'UPDATE usuarios SET nombre = ?, email = ? WHERE id = ?',
+                [conductor.getNombre(), conductor.getEmail(), conductor.getId()]
+            );
+
+            await connection.query(
+                'UPDATE conductores SET licencia = ?, telefono = ?, sueldo = ?, disponible = ? WHERE usuario_id = ?',
+                [conductor.getLicencia(), conductor.getTelefono(), conductor.getSueldo(), conductor.EstadoDisponible(), conductor.getId()]
+            );
+
+            await connection.commit();
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
         }
-        return conductor;
     }
 
-    async listaDisponibles():Promise<Conductor[]>{
-        const conductores=await this.repository.obtenerTodos();
-        if(!conductores){
-            throw new Error(" no se encuantra ningun Conductor en el sistema : ");
-
-        }
-        return conductores.filter(c=>c.EstadoDisponible());
+    async eliminar(id: string): Promise<void> {
+        await pool.query('DELETE FROM usuarios WHERE id = ?', [id]);
     }
-
-    async darDeBajaConductor(id:string ) :Promise<void>{
-        await this.repository.eliminar(id);
-        console.log(`Conductor con ID ${id} dado de baja.`);
-
-    }
-
 }
-

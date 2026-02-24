@@ -61,7 +61,7 @@ export class Vehiculo {
      getkilometraje(): number { return this.kilometraje; }
      getestado(): Estado_Vehiculo { return this.estado; }
      getAño(): number { return this.año; }
-
+     isDisponible(): boolean { return this.estado === Estado_Vehiculo.DISPONIBLE; }
     getId(): string {return this.id;}
     
     setEstado(nuevoEstado: Estado_Vehiculo): void { this.estado = nuevoEstado; }

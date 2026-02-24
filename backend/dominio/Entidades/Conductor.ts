@@ -70,6 +70,7 @@ export class Conductor extends usuario {
     EstadoDisponible(): boolean { return this.disponible; }
     getId(): string { return super.getId(); }
     getnombre(): string { return super.getNombre(); }
+    getEdad(): number { return this.edad; }
 
 
     setSueldo(nuevoSueldo: number): void { this.sueldo = nuevoSueldo; }
