@@ -12,23 +12,23 @@ export class Vehiculo {
     private año: number;
 
     constructor(
-                    id: string,
-                    marca: string,
-                      placa: string,
-                     modelo: string,
-                     capacidad: number,
-                   kilometraje: number,
-                    estado: Estado_Vehiculo,
-                     año: number
+            id: string,
+            marca: string,
+            placa: string,
+            modelo: string,
+            capacidad: number,
+            kilometraje: number,
+            estado: Estado_Vehiculo,
+            año: number
                 ) {
          this.id = id;
-        this.marca = marca;
+         this.marca = marca;
          this.placa = placa;
          this.modelo = modelo;
-        this.capacidad = capacidad;
-        this.kilometraje = kilometraje;
+         this.capacidad = capacidad;
+         this.kilometraje = kilometraje;
          this.estado = estado;
-        this.año = año;
+         this.año = año;
     }
 
 

@@ -1,4 +1,9 @@
 {
+  "name": "sistema-de-monitoreo-operativo-de-vehiculos",
+  "version": "1.0.0",
+  "description": "",
+  "main": "backend/main.ts",
+  "type": "commonjs",
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^4.17.25",
@@ -9,11 +14,6 @@
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   },
-  "name": "sistema-de-monitoreo-operativo-de-vehiculos",
-  "version": "1.0.0",
-  "description": "",
-  "main": "backend/main.ts",
-  "type": "commonjs",
   "dependencies": {
     "acorn": "^8.15.0",
     "acorn-walk": "^8.3.4",
