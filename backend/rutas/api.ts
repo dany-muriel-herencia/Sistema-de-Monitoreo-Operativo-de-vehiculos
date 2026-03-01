@@ -1,6 +1,7 @@
 // rutas/api.ts
 import { Router } from "express";
 
+
 // ── Repositorios ───────────────────────────────────────────────────────────────
 import { ConductorRepositorio } from "../infraestructura/repositorios/ConductorRepositorio";
 import { VehiculoRepositorio } from "../infraestructura/repositorios/VehiculoRepositorio";
