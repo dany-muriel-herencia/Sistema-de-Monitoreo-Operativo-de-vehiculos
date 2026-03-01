@@ -1,74 +1,105 @@
-import { IVehiculoRepositorio } from "../../dominio/Repositorios/IVehiculoRepositorio";
-import { Vehiculo } from "../../dominio/Entidades/Vehiculo";
-import { Estado_Vehiculo } from "../../dominio/emuns/Estado_Vehiculo";
+// infraestructura/repositorios/ViajeRepositorio.ts
+import { IViajeRepositorio } from "../../dominio/Repositorios/IViajeRepositorio";
+import { Viaje } from "../../dominio/Entidades/Viaje";
+import { EstadoViaje } from "../../dominio/emuns/EstadoViaje";
 import { pool } from "../../db";
 
-export class VehiculoRepositorio implements IVehiculoRepositorio {
+export class ViajeRepositorio implements IViajeRepositorio {
 
-    async guardar(vehiculo: Vehiculo): Promise<void> {
-        const [estadoResult]: any = await pool.query('SELECT id FROM estado_vehiculo WHERE nombre = ?', [vehiculo.getestado()]);
-        const estadoId = estadoResult[0]?.id;
-
-        await pool.query(
-            'INSERT INTO vehiculos (placa, modelo, capacidad, kilometraje, estado_id) VALUES (?, ?, ?, ?, ?)',
-            [vehiculo.getplaca(), vehiculo.getmodelo(), vehiculo.getcapacidad(), vehiculo.getkilometraje(), estadoId]
+    // ─── Mapea una fila de BD → instancia Viaje ──────────────────────────────
+    private mapearFila(row: any): Viaje {
+        return new Viaje(
+            row.id.toString(),
+            row.conductor_id.toString(),
+            row.vehiculo_id.toString(),
+            row.ruta_id.toString(),
+            row.estado_nombre as EstadoViaje,        // viene del JOIN con estado_viaje
+            row.fecha_hora_inicio ? new Date(row.fecha_hora_inicio) : null,
+            row.fecha_hora_fin ? new Date(row.fecha_hora_fin) : null
         );
     }
 
-    async obtenerPorPlaca(placa: string): Promise<Vehiculo | null> {
+    // ─── Helper: obtiene el id numérico del estado en la BD ─────────────────
+    private async obtenerEstadoId(estado: EstadoViaje): Promise<number> {
         const [rows]: any = await pool.query(
-            `SELECT v.*, e.nombre as estado_nombre 
-             FROM vehiculos v 
-             JOIN estado_vehiculo e ON v.estado_id = e.id 
-             WHERE v.placa = ?`,
-            [placa]
+            'SELECT id FROM estado_viaje WHERE nombre = ?', [estado]
         );
+        if (!rows[0]) throw new Error(`EstadoViaje desconocido: ${estado}`);
+        return rows[0].id;
+    }
 
+    // ─── Insertar un nuevo viaje ──────────────────────────────────────────────
+    async guardar(viaje: Viaje): Promise<void> {
+        const estadoId = await this.obtenerEstadoId(viaje.getEstado());
+        await pool.query(
+            `INSERT INTO viajes (conductor_id, vehiculo_id, ruta_id, estado_id, fecha_hora_inicio, fecha_hora_fin)
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            [
+                viaje.getIdConductor(),
+                viaje.getIdVehiculo(),
+                viaje.getIdRuta(),
+                estadoId,
+                viaje.getFechaInicio(),
+                viaje.getFechaFin()
+            ]
+        );
+    }
+
+    // ─── Obtener viaje por ID ─────────────────────────────────────────────────
+    async obtenerPorId(id: string): Promise<Viaje | null> {
+        const [rows]: any = await pool.query(
+            `SELECT v.*, ev.nombre AS estado_nombre
+             FROM viajes v
+             JOIN estado_viaje ev ON v.estado_id = ev.id
+             WHERE v.id = ?`,
+            [id]
+        );
         if (rows.length === 0) return null;
-
-        const row = rows[0];
-        return new Vehiculo(
-            row.id.toString(),
-            "", 
-            row.placa,
-            row.modelo,
-            row.capacidad,
-            row.kilometraje,
-            row.estado_nombre as Estado_Vehiculo,
-            0 // Año no estaba en el SQL
-        );
+        return this.mapearFila(rows[0]);
     }
 
-    async obtenerTodos(): Promise<Vehiculo[]> {
+    // ─── Obtener todos los viajes ─────────────────────────────────────────────
+    async obtenerTodos(): Promise<Viaje[]> {
         const [rows]: any = await pool.query(
-            `SELECT v.*, e.nombre as estado_nombre 
-             FROM vehiculos v 
-             JOIN estado_vehiculo e ON v.estado_id = e.id`
+            `SELECT v.*, ev.nombre AS estado_nombre
+             FROM viajes v
+             JOIN estado_viaje ev ON v.estado_id = ev.id
+             ORDER BY v.fecha_hora_inicio DESC`
         );
-
-        return rows.map((row: any) => new Vehiculo(
-            row.id.toString(),
-            "",
-            row.placa,
-            row.modelo,
-            row.capacidad,
-            row.kilometraje,
-            row.estado_nombre as Estado_Vehiculo,
-            0
-        ));
+        return rows.map((row: any) => this.mapearFila(row));
     }
 
-    async actualizar(vehiculo: Vehiculo): Promise<void> {
-        const [estadoResult]: any = await pool.query('SELECT id FROM estado_vehiculo WHERE nombre = ?', [vehiculo.getestado()]);
-        const estadoId = estadoResult[0]?.id;
-
+    // ─── Actualizar solo el estado de un viaje ────────────────────────────────
+    async actualizarEstado(id: string, nuevoEstado: string): Promise<void> {
+        const estadoId = await this.obtenerEstadoId(nuevoEstado as EstadoViaje);
         await pool.query(
-            'UPDATE vehiculos SET modelo = ?, capacidad = ?, kilometraje = ?, estado_id = ? WHERE placa = ?',
-            [vehiculo.getmodelo(), vehiculo.getcapacidad(), vehiculo.getkilometraje(), estadoId, vehiculo.getplaca()]
+            'UPDATE viajes SET estado_id = ? WHERE id = ?',
+            [estadoId, id]
         );
     }
 
-    async eliminar(placa: string): Promise<void> {
-        await pool.query('DELETE FROM vehiculos WHERE placa = ?', [placa]);
+    // ─── Listar viajes que están EN_CURSO ─────────────────────────────────────
+    async listarEnCurso(): Promise<Viaje[]> {
+        const [rows]: any = await pool.query(
+            `SELECT v.*, ev.nombre AS estado_nombre
+             FROM viajes v
+             JOIN estado_viaje ev ON v.estado_id = ev.id
+             WHERE ev.nombre = ?`,
+            [EstadoViaje.EN_CURSO]
+        );
+        return rows.map((row: any) => this.mapearFila(row));
+    }
+
+    // ─── Historial de viajes de un conductor ──────────────────────────────────
+    async obtenerHistorialConductor(idConductor: string): Promise<Viaje[]> {
+        const [rows]: any = await pool.query(
+            `SELECT v.*, ev.nombre AS estado_nombre
+             FROM viajes v
+             JOIN estado_viaje ev ON v.estado_id = ev.id
+             WHERE v.conductor_id = ?
+             ORDER BY v.fecha_hora_inicio DESC`,
+            [idConductor]
+        );
+        return rows.map((row: any) => this.mapearFila(row));
     }
 }

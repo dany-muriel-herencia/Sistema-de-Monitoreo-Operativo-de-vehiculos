@@ -1,17 +1,17 @@
-import { Vehiculo } from "../Entidades/Vehiculo";
-import { IVehiculoRepositorio } from "../Repositorios/IVehiculoRepositorio";
+import { Vehiculo } from "../../dominio/Entidades/Vehiculo";
+import { IVehiculoRepositorio } from "../../dominio/Repositorios/IVehiculoRepositorio";
 
 export class GestionVehiculos {
     constructor(private repository: IVehiculoRepositorio) { }
 
 
     async registrarVehiculo(vehiculo: Vehiculo): Promise<void> {
-        const existe = await this.repository.obtenerPorPlaca(vehiculo.getplaca());
+        const existe = await this.repository.obtenerPorPlaca(vehiculo.getPlaca());
         if (existe) {
-            throw new Error(`El vehículo con placa ${vehiculo.getplaca()} ya está registrado.`);
+            throw new Error(`El vehículo con placa ${vehiculo.getPlaca()} ya está registrado.`);
         }
         await this.repository.guardar(vehiculo);
-        console.log(`Vehículo ${vehiculo.getplaca()} registrado con éxito.`);
+        console.log(`Vehículo ${vehiculo.getPlaca()} registrado con éxito.`);
     }
 
 

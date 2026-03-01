@@ -1,5 +1,5 @@
-import { Conductor } from "../Entidades/Conductor";
-import { IConductorRepositorio } from "../Repositorios/IConductorRepositorio";
+import { Conductor } from "../../dominio/Entidades/Conductor";
+import { IConductorRepositorio } from "../../dominio/Repositorios/IConductorRepositorio";
 
 export class Gestion_Conductores {
     constructor(private repository: IConductorRepositorio) { }

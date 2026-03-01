@@ -24,6 +24,7 @@ CREATE TABLE conductores (
     licencia VARCHAR(20) NOT NULL,
     telefono VARCHAR(15),
     sueldo DECIMAL(10,2),
+    edad INT, -- Agregado para sincronizar con la entidad Conductor.ts
     disponible BOOLEAN DEFAULT TRUE,
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
 );
@@ -46,8 +47,10 @@ INSERT INTO estado_vehiculo (nombre) VALUES ('DISPONIBLE'), ('EN_RUTA'), ('EN_MA
 -- -----------------------------------------------------
 CREATE TABLE vehiculos (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    marca VARCHAR(50) NOT NULL, -- Agregado para sincronizar con Vehiculo.ts
     placa VARCHAR(10) UNIQUE NOT NULL,
     modelo VARCHAR(50) NOT NULL,
+    año INT, -- Agregado para sincronizar con Vehiculo.ts
     capacidad INT NOT NULL,
     kilometraje DECIMAL(10,2) DEFAULT 0,
     estado_id INT NOT NULL,

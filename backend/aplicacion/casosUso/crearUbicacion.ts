@@ -3,15 +3,15 @@ import { UbicacionGPS } from "../../dominio/Entidades/UbicacionGPS";
 import { UbicacionDTO } from "../dtos/UbicacionDTO";
 
 export class CrearUbicacion {
-    constructor(private ubicacionRepo: IUbicacionRepositorio) {}
+    constructor(private ubicacionRepo: IUbicacionRepositorio) { }
 
     async ejecutar(datos: UbicacionDTO): Promise<void> {
         const nuevaUbicacion = new UbicacionGPS(
-            null, // ID autogenerado
+            datos.idviaje,
             datos.latitud,
             datos.longitud,
             new Date(),
-            datos.idVehiculo
+            datos.velocidad || 0
         );
 
         await this.ubicacionRepo.guardar(nuevaUbicacion);

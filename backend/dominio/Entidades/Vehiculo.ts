@@ -1,73 +1,43 @@
-import { Estado_Vehiculo } from "../emuns/Estado_Vehiculo";
-import { AsignacionConductor } from "./AsignacionConductor";
+// dominio/Entidades/Vehiculo.ts
+import { EstadoVehiculo } from "../emuns/EstadoVehiculo";
 
 export class Vehiculo {
-    private id: string;
-    private marca: string;
-    private placa: string;
-    private modelo: string;
-    private capacidad: number;
-    private kilometraje: number;
-    private estado: Estado_Vehiculo;
-    private año: number;
-
     constructor(
-            id: string,
-            marca: string,
-            placa: string,
-            modelo: string,
-            capacidad: number,
-            kilometraje: number,
-            estado: Estado_Vehiculo,
-            año: number
-                ) {
-         this.id = id;
-         this.marca = marca;
-         this.placa = placa;
-         this.modelo = modelo;
-         this.capacidad = capacidad;
-         this.kilometraje = kilometraje;
-         this.estado = estado;
-         this.año = año;
-    }
+        private id: number | null, // INT AUTO_INCREMENT en BD
+        private marca: string,
+        private placa: string,
+        private modelo: string,
+        private capacidad: number,
+        private kilometraje: number,
+        private estado: EstadoVehiculo,
+        private año: number
+    ) {}
 
+    // --- MÉTODOS DE ACCESO (Getters) ---
+    public getId() { return this.id; }
+    public getMarca() { return this.marca; }
+    public getPlaca() { return this.placa; }
+    public getModelo() { return this.modelo; }
+    public getCapacidad() { return this.capacidad; }
+    public getKilometraje() { return this.kilometraje; }
+    public getEstado() { return this.estado; }
+    public getAño() { return this.año; }
 
-    asignarConductor(idConductor: string, fechaInicio: Date, fechaFin: Date): AsignacionConductor {
-        if (this.estado !== Estado_Vehiculo.DISPONIBLE) {
-            throw new Error(`Vehículo ${this.placa} no está disponible (estado: ${this.estado})`);
-        }
-        const idAsignacion = `${this.id}${idConductor}`;
-        this.estado = Estado_Vehiculo.EN_SERVICIO;
-        return new AsignacionConductor(idAsignacion, idConductor, this.id, fechaInicio, fechaFin);
-    }
-
-
-    actualizarKilometraje(kmRecorridos: number): void {
-        if (kmRecorridos < 0) throw new Error("Los km recorridos no pueden ser negativos");
-        this.kilometraje += kmRecorridos;
-    }
-
-
-    estaDisponible(): boolean {
-        return this.estado === Estado_Vehiculo.DISPONIBLE;
-    }
-
+    // --- MÉTODOS DE LÓGICA DE NEGOCIO (Comportamiento) ---
     
-    getid(): string { return this.id; }
-    getMarca(): string { return this.marca; }
-    getplaca(): string { return this.placa; }
-     getmodelo(): string { return this.modelo; }
-     getcapacidad(): number { return this.capacidad; }
-     getkilometraje(): number { return this.kilometraje; }
-     getestado(): Estado_Vehiculo { return this.estado; }
-     getAño(): number { return this.año; }
-     isDisponible(): boolean { return this.estado === Estado_Vehiculo.DISPONIBLE; }
-    getId(): string {return this.id;}
-    
-    setEstado(nuevoEstado: Estado_Vehiculo): void { this.estado = nuevoEstado; }
+    // Verifica si el vehículo puede iniciar un nuevo viaje
+    public estaDisponibleParaViaje(): boolean {
+        return this.estado === EstadoVehiculo.DISPONIBLE;
+    }
 
-    setModelo(nuevoModelo: string): void { this.modelo = nuevoModelo; }
+    // Actualiza el kilometraje después de un recorrido
+    public registrarUso(km: number): void {
+        if (km < 0) throw new Error("El kilometraje no puede ser negativo");
+        this.kilometraje += km;
+    }
 
-    setCapacidad(nuevaCapacidad: number): void { this.capacidad = nuevaCapacidad; }
-    setPlaca(nuevaPlaca: string): void { this.placa = nuevaPlaca; }
+    // Cambia el estado del vehículo (ej: de DISPONIBLE a EN_RUTA)
+    public actualizarEstado(nuevoEstado: EstadoVehiculo): void {
+        this.estado = nuevoEstado;
+    }
 }

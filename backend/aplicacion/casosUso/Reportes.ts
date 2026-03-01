@@ -1,5 +1,5 @@
-import { Viaje } from "../Entidades/Viaje";
-import { Vehiculo } from "../Entidades/Vehiculo";
+import { Viaje } from "../../dominio/Entidades/Viaje";
+import { Vehiculo } from "../../dominio/Entidades/Vehiculo";
 
 export class Reportes {
 
@@ -7,7 +7,8 @@ export class Reportes {
      * Genera un resumen del kilometraje total de la flota.
      */
     resumenKilometrajeFlota(vehiculos: Vehiculo[]): number {
-        const total = vehiculos.reduce((acc, v) => acc + v.getkilometraje(), 0);
+        // Corregido: getKilometraje() con K mayúscula
+        const total = vehiculos.reduce((acc, v) => acc + v.getKilometraje(), 0);
         return total;
     }
 
@@ -29,13 +30,20 @@ export class Reportes {
     }
 
 
+    /**
+     * Calcula el promedio de duración de los viajes que ya finalizaron.
+     */
     promedioDuracionViajes(viajes: Viaje[]): number {
         const viajesFinalizados = viajes.filter(v => v.getFechaFin() !== null);
         if (viajesFinalizados.length === 0) return 0;
 
-        const sumaMinutos = viajesFinalizados.reduce((acc, v) => acc + v.calcularDuracionMinutos(), 0);
-        const promedio = sumaMinutos / viajesFinalizados.length;
+        // Sumamos la diferencia en minutos entre fecha fin e inicio
+        const sumaMinutos = viajesFinalizados.reduce((acc, v) => {
+            const inicio = v.getFechaInicio()!.getTime();
+            const fin = v.getFechaFin()!.getTime();
+            return acc + ((fin - inicio) / (1000 * 60));
+        }, 0);
 
-        return promedio;
+        return sumaMinutos / viajesFinalizados.length;
     }
 }

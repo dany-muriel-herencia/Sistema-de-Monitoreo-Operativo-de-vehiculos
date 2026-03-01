@@ -26,5 +26,6 @@ export class usuario {
     getId(): string { return this.id; }
     getNombre(): string { return this.nombre; }
     getEmail(): string { return this.email; }
+    getContraseña(): string { return this.contraseña; }
 }
 
