@@ -1,14 +1,15 @@
-// controladores/viajeController.ts
 import { Request, Response } from 'express';
 import { Gestion_Viajes } from '../aplicacion/casosUso/Gestion_Viajes';
 import { Gestion_Conductores } from '../aplicacion/casosUso/Gestion_Conductores';
 import { GestionVehiculos } from '../aplicacion/casosUso/GestionVehiculos';
+import { MonitoreoRealTime } from '../aplicacion/casosUso/MonitoreoRealTime';
 
 export class ViajeController {
     constructor(
         private gestionViajesUC: Gestion_Viajes,
         private gestionConductoresUC: Gestion_Conductores,
-        private gestionVehiculosUC: GestionVehiculos
+        private gestionVehiculosUC: GestionVehiculos,
+        private monitoreoUC: MonitoreoRealTime
     ) { }
 
     // POST /viajes  — planificar un viaje nuevo
@@ -99,6 +100,28 @@ export class ViajeController {
             res.status(200).json(historial);
         } catch (error: any) {
             res.status(500).json({ error: error.message });
+        }
+    }
+
+    // GET /monitoreo — datos en tiempo real de viajes activos
+    async monitoreo(req: Request, res: Response): Promise<void> {
+        try {
+            const data = await this.monitoreoUC.ejecutar();
+            res.status(200).json(data);
+        } catch (error: any) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+
+    // PUT /viajes/:id — actualizar asignación (conductor/vehículo)
+    async actualizarAsignacion(req: Request, res: Response): Promise<void> {
+        try {
+            const idViaje = req.params.id as string;
+            const { idConductor, idVehiculo } = req.body;
+            await this.gestionViajesUC.actualizarAsignacion(idViaje, idConductor, idVehiculo);
+            res.status(200).json({ mensaje: "Asignación del viaje actualizada" });
+        } catch (error: any) {
+            res.status(400).json({ error: error.message });
         }
     }
 }

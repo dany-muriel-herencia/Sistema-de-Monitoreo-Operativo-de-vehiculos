@@ -21,6 +21,7 @@ import { Gestion_Viajes } from "../aplicacion/casosUso/Gestion_Viajes";
 import { CrearUbicacion } from "../aplicacion/casosUso/crearUbicacion";
 import { Login } from "../aplicacion/casosUso/Login";
 import { RecuperarContrasena } from "../aplicacion/casosUso/RecuperarContrasena";
+import { MonitoreoRealTime } from "../aplicacion/casosUso/MonitoreoRealTime";
 
 // ── Controladores ──────────────────────────────────────────────────────────────
 import { ConductorController } from "../controladores/conductorController";
@@ -56,10 +57,11 @@ const gestionViajesUC = new Gestion_Viajes(viajeRepo);
 const crearUbicacionUC = new CrearUbicacion(ubicacionRepo);
 const loginUC = new Login(usuarioRepo);
 const recuperarContrasenaUC = new RecuperarContrasena(usuarioRepo);
+const monitoreoUC = new MonitoreoRealTime(viajeRepo, ubicacionRepo, conductorRepo);
 
 const conductorCtrl = new ConductorController(crearConductorUC, gestionConductoresUC, obtenerConductoresUC);
 const vehiculoCtrl = new VehiculoController(gestionVehiculosUC);
-const viajeCtrl = new ViajeController(gestionViajesUC, gestionConductoresUC, gestionVehiculosUC);
+const viajeCtrl = new ViajeController(gestionViajesUC, gestionConductoresUC, gestionVehiculosUC, monitoreoUC);
 const ubicacionCtrl = new UbicacionController(crearUbicacionUC, ubicacionRepo);
 const rutaCtrl = new RutaController(rutaRepo);
 const alertaCtrl = new AlertaController(alertaRepo);
@@ -81,6 +83,7 @@ router.get("/conductores", (req, res) => conductorCtrl.listar(req, res));
 router.get("/conductores/disponibles", (req, res) => conductorCtrl.listarDisponibles(req, res));
 router.get("/conductores/:id", (req, res) => conductorCtrl.obtenerPorId(req, res));
 router.delete("/conductores/:id", (req, res) => conductorCtrl.eliminar(req, res));
+router.put("/conductores/:id", (req, res) => conductorCtrl.actualizar(req, res));
 
 // ──────────────────────────────────────────────────────────────────────────────
 // RUTAS — VEHÍCULOS
@@ -99,6 +102,8 @@ router.get("/viajes/en-curso", (req, res) => viajeCtrl.listarEnCurso(req, res));
 router.get("/viajes/historial/:idConductor", (req, res) => viajeCtrl.historialConductor(req, res));
 router.patch("/viajes/:id/iniciar", (req, res) => viajeCtrl.iniciar(req, res));
 router.patch("/viajes/:id/finalizar", (req, res) => viajeCtrl.finalizar(req, res));
+router.put("/viajes/:id", (req, res) => viajeCtrl.actualizarAsignacion(req, res));
+router.get("/monitoreo", (req, res) => viajeCtrl.monitoreo(req, res));
 
 // ──────────────────────────────────────────────────────────────────────────────
 // RUTAS — RUTAS DE TRANSPORTE

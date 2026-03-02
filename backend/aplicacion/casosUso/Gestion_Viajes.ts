@@ -14,8 +14,8 @@ export class Gestion_Viajes {
         if (!vehiculo.estaDisponibleParaViaje()) {                    // ✅ nuevo nombre
             throw new Error("El vehículo no está disponible.");
         }
-        const idVehiculo = vehiculo.getId()?.toString() ?? '';        // number|null → string
-        const nuevoViaje = new Viaje(id, conductor.getId(), idVehiculo, idRuta);
+        const idVehiculo = vehiculo.getId()?.toString() || '';        // number|null → string
+        const nuevoViaje = new Viaje(id, conductor.getId()!.toString(), idVehiculo, idRuta);
         await this.repository.guardar(nuevoViaje);
 
         console.log(`Viaje ${id} planificado con éxito.`);
@@ -63,5 +63,15 @@ export class Gestion_Viajes {
 
     async historialPorConductor(idConductor: string): Promise<Viaje[]> {
         return await this.repository.obtenerHistorialConductor(idConductor);
+    }
+
+    async actualizarAsignacion(idViaje: string, idConductor: string, idVehiculo: string): Promise<void> {
+        const viaje = await this.repository.obtenerPorId(idViaje);
+        if (!viaje) throw new Error("Viaje no encontrado");
+
+        viaje.setIdConductor(idConductor);
+        viaje.setIdVehiculo(idVehiculo);
+
+        await this.repository.actualizar(viaje);
     }
 }

@@ -71,4 +71,38 @@ class ViajeService {
       rethrow;
     }
   }
+
+  Future<List<dynamic>> obtenerMonitoreo() async {
+    try {
+      final response = await http.get(Uri.parse('${ApiConstants.baseUrl}/monitoreo'));
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Error al obtener datos de monitoreo: ${response.body}');
+      }
+    } catch (e) {
+      print('ViajeService.obtenerMonitoreo Error: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> actualizarAsignacion(String idViaje, String idConductor, String idVehiculo) async {
+    try {
+      final response = await http.put(
+        Uri.parse('${ApiConstants.baseUrl}/viajes/$idViaje'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'idConductor': idConductor,
+          'idVehiculo': idVehiculo,
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Error al actualizar asignación: ${response.body}');
+      }
+    } catch (e) {
+      print('ViajeService.actualizarAsignacion Error: $e');
+      rethrow;
+    }
+  }
 }

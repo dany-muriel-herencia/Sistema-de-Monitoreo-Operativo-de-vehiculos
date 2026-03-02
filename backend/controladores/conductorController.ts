@@ -96,4 +96,16 @@ export class ConductorController {
             res.status(500).json({ error: error.message });
         }
     }
+
+    // PUT /conductores/:id  — actualizar datos
+    async actualizar(req: Request, res: Response): Promise<void> {
+        try {
+            const id = req.params.id as string;
+            await this.gestionConductoresUC.actualizarConductor(id, req.body);
+            res.status(200).json({ mensaje: "Datos del conductor actualizados" });
+        } catch (error: any) {
+            console.error("Error al actualizar conductor:", error);
+            res.status(400).json({ error: error.message });
+        }
+    }
 }

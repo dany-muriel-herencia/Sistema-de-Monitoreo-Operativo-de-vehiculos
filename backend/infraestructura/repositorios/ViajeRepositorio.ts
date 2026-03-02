@@ -79,6 +79,28 @@ export class ViajeRepositorio implements IViajeRepositorio {
         );
     }
 
+    async actualizar(viaje: Viaje): Promise<void> {
+        // Resolvemos el ID del vehículo por si acaso idVehiculo es una placa
+        const [vehRows]: any = await pool.query('SELECT id FROM vehiculos WHERE id = ? OR placa = ?', [viaje.getIdVehiculo(), viaje.getIdVehiculo()]);
+        const vehId = vehRows[0]?.id;
+        if (!vehId) throw new Error("Vehículo no encontrado para la asignación");
+
+        const estadoId = await this.obtenerEstadoId(viaje.getEstado());
+
+        await pool.query(
+            `UPDATE viajes 
+             SET conductor_id = ?, vehiculo_id = ?, ruta_id = ?, estado_id = ?
+             WHERE id = ?`,
+            [
+                viaje.getIdConductor(),
+                vehId,
+                viaje.getIdRuta(),
+                estadoId,
+                viaje.getId()
+            ]
+        );
+    }
+
     // ─── Listar viajes que están EN_CURSO ─────────────────────────────────────
     async listarEnCurso(): Promise<Viaje[]> {
         const [rows]: any = await pool.query(

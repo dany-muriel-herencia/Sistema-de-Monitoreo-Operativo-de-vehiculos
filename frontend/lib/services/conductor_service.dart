@@ -51,4 +51,21 @@ class ConductorService {
       rethrow;
     }
   }
+
+  Future<void> actualizarConductor(String id, Map<String, dynamic> datos) async {
+    try {
+      final response = await http.put(
+        Uri.parse('${ApiConstants.conductores}/$id'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(datos),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Error al actualizar conductor: ${response.body}');
+      }
+    } catch (e) {
+      print('ConductorService.actualizarConductor Error: $e');
+      rethrow;
+    }
+  }
 }

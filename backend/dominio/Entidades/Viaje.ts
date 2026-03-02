@@ -127,4 +127,7 @@ export class Viaje {
     getFechaFin(): Date | null { return this.fechaFin; }
     getEventos(): EventoOperacion[] { return this.eventos; }
     getAlertas(): AlertaRuta[] { return this.alertas; }
+
+    setIdConductor(id: string): void { this.idConductor = id; }
+    setIdVehiculo(id: string): void { this.idVehiculo = id; }
 }
