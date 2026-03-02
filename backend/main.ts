@@ -1,29 +1,25 @@
-// 1. Cargar variables de entorno PRIMERO que nada
-require('dotenv').config();
-
-const express = require('express');
-const cors = require('cors');
-// Importamos las rutas. Nota: como usas 'export default', necesitamos el '.default'
-const apiRoutes = require('./rutas/api').default;
+import 'dotenv/config';
+import express, { Request, Response, NextFunction } from 'express';
+import cors from 'cors';
+import apiRoutes from './rutas/api';
 
 const app = express();
 // 2. Usar el puerto 3000 (el 3306 es de MySQL y dará error)
 const PORT = process.env.PORT || 3000;
 
 // Middlewares
-app.use(cors({
-    origin: '*', // Permite todas las procedencias
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}));
+app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use((req: Request, res: Response, next: NextFunction) => {
+    console.log(`${req.method} ${req.url} - Body:`, req.body);
+    next();
+});
 
 // Rutas
 app.use("/api", apiRoutes);
 
-import { Request, Response } from 'express';
-
-app.get("/", (req: Request, res: Response) => {
+app.get("/", (req, res) => {
     res.send("🚀 Servidor de Monitoreo de Flotas corriendo correctamente.");
 });
 

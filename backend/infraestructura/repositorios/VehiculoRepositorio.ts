@@ -8,16 +8,21 @@ export class VehiculoRepositorio implements IVehiculoRepositorio {
 
     // ─── Mapea una fila de BD → instancia Vehiculo ───────────────────────────
     private mapearFila(row: any): Vehiculo {
-        return new Vehiculo(
-            row.id,
-            row.marca,
-            row.placa,
-            row.modelo,
-            Number(row.capacidad),
-            Number(row.kilometraje),
-            row.estado_nombre as EstadoVehiculo,
-            Number(row.año)
-        );
+        try {
+            return new Vehiculo(
+                row.id,
+                row.marca,
+                row.placa,
+                row.modelo,
+                Number(row.capacidad),
+                Number(row.kilometraje),
+                row.estado_nombre as EstadoVehiculo,
+                Number(row.anio ?? row.año ?? 0)
+            );
+        } catch (error) {
+            console.error("Error en VehiculoRepositorio.mapearFila:", error, row);
+            throw error;
+        }
     }
 
     // ─── Insertar un nuevo vehículo ───────────────────────────────────────────
@@ -35,7 +40,7 @@ export class VehiculoRepositorio implements IVehiculoRepositorio {
                 vehiculo.getMarca(),
                 vehiculo.getPlaca(),
                 vehiculo.getModelo(),
-                vehiculo.getAño(),
+                vehiculo.getAnio(),
                 vehiculo.getCapacidad(),
                 vehiculo.getKilometraje(),
                 estadoId
@@ -46,7 +51,7 @@ export class VehiculoRepositorio implements IVehiculoRepositorio {
     // ─── Buscar vehículo por placa ────────────────────────────────────────────
     async obtenerPorPlaca(placa: string): Promise<Vehiculo | null> {
         const [rows]: any = await pool.query(
-            `SELECT v.*, ev.nombre AS estado_nombre
+            `SELECT v.id, v.marca, v.placa, v.modelo, v.año as anio, v.capacidad, v.kilometraje, v.estado_id, ev.nombre AS estado_nombre
              FROM vehiculos v
              JOIN estado_vehiculo ev ON v.estado_id = ev.id
              WHERE v.placa = ?`,
@@ -59,7 +64,7 @@ export class VehiculoRepositorio implements IVehiculoRepositorio {
     // ─── Obtener todos los vehículos ──────────────────────────────────────────
     async obtenerTodos(): Promise<Vehiculo[]> {
         const [rows]: any = await pool.query(
-            `SELECT v.*, ev.nombre AS estado_nombre
+            `SELECT v.id, v.marca, v.placa, v.modelo, v.año as anio, v.capacidad, v.kilometraje, v.estado_id, ev.nombre AS estado_nombre
              FROM vehiculos v
              JOIN estado_vehiculo ev ON v.estado_id = ev.id`
         );
@@ -82,7 +87,7 @@ export class VehiculoRepositorio implements IVehiculoRepositorio {
             [
                 vehiculo.getMarca(),
                 vehiculo.getModelo(),
-                vehiculo.getAño(),
+                vehiculo.getAnio(),
                 vehiculo.getCapacidad(),
                 vehiculo.getKilometraje(),
                 estadoId,
@@ -93,6 +98,14 @@ export class VehiculoRepositorio implements IVehiculoRepositorio {
 
     // ─── Eliminar vehículo por placa ──────────────────────────────────────────
     async eliminar(placa: string): Promise<void> {
-        await pool.query('DELETE FROM vehiculos WHERE placa = ?', [placa]);
+        try {
+            await pool.query('DELETE FROM vehiculos WHERE placa = ?', [placa]);
+        } catch (error: any) {
+            console.error("DB Error en VehiculoRepositorio.eliminar:", error);
+            if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+                throw new Error("No se puede eliminar el vehículo porque está asignado a un viaje.");
+            }
+            throw error;
+        }
     }
 }

@@ -1,6 +1,7 @@
-import { usuario } from "../Entidades/usuario";
+import { Usuario } from "../Entidades/usuarios";
 
 export interface IUsuarioRepositorio {
-    obtenerPorEmail(email: string): Promise<usuario | null>;
-    guardar(user: usuario): Promise<void>;
+    obtenerPorEmail(email: string): Promise<Usuario | null>;
+    guardar(user: Usuario): Promise<void>;
+    actualizar(user: Usuario): Promise<void>;
 }

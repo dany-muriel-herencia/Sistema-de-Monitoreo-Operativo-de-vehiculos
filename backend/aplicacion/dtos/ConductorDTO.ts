@@ -1,7 +1,7 @@
 export interface ConductorDTO {
     nombre: string;
     email: string;
-    contraseña?: string;
+    contrasena?: string;
     licencia: string;
     telefono: number;
     sueldo: number;

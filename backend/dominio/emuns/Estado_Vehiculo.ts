@@ -1,6 +1,0 @@
-export enum Estado_Vehiculo {
-    DISPONIBLE = "DISPONIBLE",
-    EN_SERVICIO = "EN_SERVICIO",
-    MANTENIMIENTO = "MANTENIMIENTO",
-    INACTIVO = "INACTIVO"
-}

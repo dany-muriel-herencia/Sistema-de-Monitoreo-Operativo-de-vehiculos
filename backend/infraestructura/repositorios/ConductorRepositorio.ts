@@ -11,7 +11,7 @@ export class ConductorRepositorio implements IConductorRepositorio {
             row.id.toString(),
             row.nombre,
             row.email,
-            row.contraseña,
+            row.contrasena || row.contraseña,
             row.licencia,
             Number(row.telefono),
             Number(row.sueldo),
@@ -28,7 +28,7 @@ export class ConductorRepositorio implements IConductorRepositorio {
 
             const [userResult]: any = await connection.query(
                 'INSERT INTO usuarios (nombre, email, contraseña, rol) VALUES (?, ?, ?, ?)',
-                [conductor.getNombre(), conductor.getEmail(), conductor.getContraseña(), 'conductor']
+                [conductor.getNombre(), conductor.getEmail(), conductor.getContrasena(), 'conductor']
             );
             const userId = userResult.insertId;
 
@@ -46,6 +46,7 @@ export class ConductorRepositorio implements IConductorRepositorio {
 
             await connection.commit();
         } catch (error) {
+            console.error("DB Error en ConductorRepositorio.guardar:", error);
             await connection.rollback();
             throw error;
         } finally {
@@ -56,7 +57,7 @@ export class ConductorRepositorio implements IConductorRepositorio {
     // ─── Buscar conductor por ID ───────────────────────────────────────────────
     async obtenerPorId(id: string): Promise<Conductor | null> {
         const [rows]: any = await pool.query(
-            `SELECT u.id, u.nombre, u.email, u.contraseña,
+            `SELECT u.id, u.nombre, u.email, u.contraseña as contrasena,
                     c.licencia, c.telefono, c.sueldo, c.edad, c.disponible
              FROM usuarios u
              JOIN conductores c ON u.id = c.usuario_id
@@ -70,7 +71,7 @@ export class ConductorRepositorio implements IConductorRepositorio {
     // ─── Obtener todos los conductores ────────────────────────────────────────
     async obtenerTodos(): Promise<Conductor[]> {
         const [rows]: any = await pool.query(
-            `SELECT u.id, u.nombre, u.email, u.contraseña,
+            `SELECT u.id, u.nombre, u.email, u.contraseña as contrasena,
                     c.licencia, c.telefono, c.sueldo, c.edad, c.disponible
              FROM usuarios u
              JOIN conductores c ON u.id = c.usuario_id`
@@ -105,6 +106,7 @@ export class ConductorRepositorio implements IConductorRepositorio {
 
             await connection.commit();
         } catch (error) {
+            console.error("DB Error en ConductorRepositorio.actualizar:", error);
             await connection.rollback();
             throw error;
         } finally {
@@ -114,6 +116,14 @@ export class ConductorRepositorio implements IConductorRepositorio {
 
     // ─── Eliminar conductor (borra en cascada desde usuarios) ─────────────────
     async eliminar(id: string): Promise<void> {
-        await pool.query('DELETE FROM usuarios WHERE id = ?', [id]);
+        try {
+            await pool.query('DELETE FROM usuarios WHERE id = ?', [id]);
+        } catch (error: any) {
+            console.error("DB Error en ConductorRepositorio.eliminar:", error);
+            if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+                throw new Error("No se puede eliminar el conductor porque tiene viajes o asignaciones relacionadas.");
+            }
+            throw error;
+        }
     }
 }

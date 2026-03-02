@@ -1,31 +1,31 @@
-import { usuario } from "./usuario";
+
 import { Viaje } from "./Viaje";
 import { HistorialRecorridos } from "./HistorialRecorridos";
 import { TipoEvento } from "../emuns/TipoEvento";
 import { TipoAlerta } from "../emuns/TipoAlerta";
 import { EventoOperacion } from "./EventoOperacion";
 import { AlertaRuta } from "./AlertaRuta";
+import { Usuario } from "./usuarios";
 
-
-export class Conductor extends usuario {
-    public licencia: string;
-    public telefono: number;
-    public edad: number;
-    public sueldo: number;
-    public disponible: boolean;
+export class Conductor extends Usuario {
+    private licencia: string;
+    private telefono: number;
+    private edad: number;
+    private sueldo: number;
+    private disponible: boolean;
 
     constructor(
-        id: string,
+        id: number | null,
         nombre: string,
         email: string,
-        contraseña: string,
+        contrasena: string,
         licencia: string,
         telefono: number,
         sueldo: number,
         edad: number,
         disponible: boolean = true
     ) {
-        super(id, nombre, email, contraseña);
+        super(id, nombre, email, contrasena, 'conductor');
         this.licencia = licencia;
         this.telefono = telefono;
         this.sueldo = sueldo;
@@ -41,12 +41,10 @@ export class Conductor extends usuario {
         viaje.iniciar();
     }
 
-
     finalizarviaje(viaje: Viaje): void {
         viaje.finalizar();
         this.disponible = true;
     }
-
 
     reportarIncidencia(viaje: Viaje, descripcion: string): {
         evento: EventoOperacion;
@@ -63,20 +61,15 @@ export class Conductor extends usuario {
         return [];
     }
 
-
     getLicencia(): string { return this.licencia; }
     getTelefono(): number { return this.telefono; }
     getSueldo(): number { return this.sueldo; }
     EstadoDisponible(): boolean { return this.disponible; }
-    getId(): string { return super.getId(); }
-    getnombre(): string { return super.getNombre(); }
+    getNombre(): string { return super.getNombre(); }
     getEdad(): number { return this.edad; }
-
 
     setSueldo(nuevoSueldo: number): void { this.sueldo = nuevoSueldo; }
     setTelefono(nuevoTel: number): void { this.telefono = nuevoTel; }
     setLicencia(nuevaLic: string): void { this.licencia = nuevaLic; }
-
-
     setDisponible(valor: boolean): void { this.disponible = valor; }
 }

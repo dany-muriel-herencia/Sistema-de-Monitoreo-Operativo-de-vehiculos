@@ -2,16 +2,34 @@
 import { EstadoVehiculo } from "../emuns/EstadoVehiculo";
 
 export class Vehiculo {
+    public id: number | null;
+    public marca: string;
+    public placa: string;
+    public modelo: string;
+    public capacidad: number;
+    public kilometraje: number;
+    public estado: EstadoVehiculo;
+    public anio: number;
+
     constructor(
-        public id: number | null, // INT AUTO_INCREMENT en BD
-        public marca: string,
-        public placa: string,
-        public modelo: string,
-        public capacidad: number,
-        public kilometraje: number,
-        public estado: EstadoVehiculo,
-        public año: number
-    ) { }
+        id: number | null,
+        marca: string,
+        placa: string,
+        modelo: string,
+        capacidad: number,
+        kilometraje: number,
+        estado: EstadoVehiculo,
+        anio: number
+    ) {
+        this.id = id;
+        this.marca = marca;
+        this.placa = placa;
+        this.modelo = modelo;
+        this.capacidad = capacidad;
+        this.kilometraje = kilometraje;
+        this.estado = estado;
+        this.anio = anio;
+    }
 
     // --- MÉTODOS DE ACCESO (Getters) ---
     public getId() { return this.id; }
@@ -21,7 +39,7 @@ export class Vehiculo {
     public getCapacidad() { return this.capacidad; }
     public getKilometraje() { return this.kilometraje; }
     public getEstado() { return this.estado; }
-    public getAño() { return this.año; }
+    public getAnio() { return this.anio; }
 
     // --- MÉTODOS DE LÓGICA DE NEGOCIO (Comportamiento) ---
 

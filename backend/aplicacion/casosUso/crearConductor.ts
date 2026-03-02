@@ -1,7 +1,6 @@
 import { IConductorRepositorio } from "../../dominio/Repositorios/IConductorRepositorio";
 import { Conductor } from "../../dominio/Entidades/Conductor";
 import { ConductorDTO } from "../dtos/ConductorDTO";
-import { randomUUID } from "crypto";
 
 export class CrearConductor {
     constructor(private conductorRepo: IConductorRepositorio) { }
@@ -12,13 +11,11 @@ export class CrearConductor {
             throw new Error("Email inválido");
         }
 
-        const id = randomUUID();
-
         const nuevoConductor = new Conductor(
-            id,
+            null, // El ID será asignado por la base de datos
             datos.nombre,
             datos.email,
-            datos.contraseña || "password_segura", // Esto debería venir cifrado en una implementación real
+            datos.contrasena || "password_segura", // Esto debería venir cifrado en una implementación real
             datos.licencia,
             datos.telefono,
             datos.sueldo,

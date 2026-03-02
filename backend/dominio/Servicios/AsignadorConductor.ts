@@ -14,8 +14,8 @@ export class AsignadorConductor {
         }
 
         // 2. Verificar disponibilidad del vehículo
-        if (!vehiculo.estaDisponible()) {
-            throw new Error(`El vehículo con placa ${vehiculo.getplaca()} no está disponible.`);
+        if (!vehiculo.estaDisponibleParaViaje()) {
+            throw new Error(`El vehículo con placa ${vehiculo.getPlaca()} no está disponible.`);
         }
 
         // 3. Crear el objeto de asignación
@@ -23,7 +23,7 @@ export class AsignadorConductor {
         const nuevaAsignacion = new AsignacionConductor(
             idAsignacion,
             conductor.getId(),
-            vehiculo.getId(),
+            vehiculo.getId()?.toString() || "",
             new Date()
         );
 

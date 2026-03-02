@@ -2,10 +2,10 @@ import { TipoEvento } from "../emuns/TipoEvento";
 
 
 export class EventoOperacion {
-    public id: string;
-    public timestamp: Date;
-    public tipo: TipoEvento;
-    public descripcion: string;
+    private id: string;
+    private timestamp: Date;
+    private tipo: TipoEvento;
+    private descripcion: string;
     constructor(id: string, timestamp: Date, tipo: TipoEvento, descripcion: string) {
         this.id = id;
         this.timestamp = timestamp;

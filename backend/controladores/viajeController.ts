@@ -18,7 +18,16 @@ export class ViajeController {
             const conductor = await this.gestionConductoresUC.obtenerConductor(idConductor);
             const vehiculo = await this.gestionVehiculosUC.obtenerVehiculo(placa);
             const viaje = await this.gestionViajesUC.planificarViaje(id, conductor, vehiculo, idRuta);
-            res.status(201).json({ mensaje: "Viaje planificado", data: viaje });
+            const raw: any = viaje;
+            res.status(201).json({
+                mensaje: "Viaje planificado",
+                data: {
+                    id: typeof raw.getId === 'function' ? raw.getId() : raw.id,
+                    conductor_id: typeof raw.getIdConductor === 'function' ? raw.getIdConductor() : raw.conductor_id,
+                    vehiculo_id: typeof raw.getIdVehiculo === 'function' ? raw.getIdVehiculo() : raw.vehiculo_id,
+                    estado: typeof raw.getEstado === 'function' ? raw.getEstado() : raw.estado
+                }
+            });
         } catch (error: any) {
             res.status(400).json({ error: error.message });
         }
@@ -55,7 +64,18 @@ export class ViajeController {
     async listarTodos(req: Request, res: Response): Promise<void> {
         try {
             const viajes = await this.gestionViajesUC.listarTodos();
-            res.status(200).json(viajes);
+            const data = viajes.map(v => {
+                const raw: any = v;
+                return {
+                    id: typeof raw.getId === 'function' ? raw.getId() : raw.id,
+                    conductor_id: typeof raw.getIdConductor === 'function' ? raw.getIdConductor() : raw.conductor_id,
+                    vehiculo_id: typeof raw.getIdVehiculo === 'function' ? raw.getIdVehiculo() : raw.vehiculo_id,
+                    estado: typeof raw.getEstado === 'function' ? raw.getEstado() : raw.estado,
+                    fecha_hora_inicio: typeof raw.getFechaInicio === 'function' ? raw.getFechaInicio() : raw.fecha_hora_inicio,
+                    fecha_hora_fin: typeof raw.getFechaFin === 'function' ? raw.getFechaFin() : raw.fecha_hora_fin
+                };
+            });
+            res.status(200).json(data);
         } catch (error: any) {
             res.status(500).json({ error: error.message });
         }

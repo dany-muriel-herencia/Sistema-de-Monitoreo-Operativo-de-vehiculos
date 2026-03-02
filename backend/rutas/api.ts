@@ -1,7 +1,6 @@
 // rutas/api.ts
 import { Router } from "express";
 
-
 // ── Repositorios ───────────────────────────────────────────────────────────────
 import { ConductorRepositorio } from "../infraestructura/repositorios/ConductorRepositorio";
 import { VehiculoRepositorio } from "../infraestructura/repositorios/VehiculoRepositorio";
@@ -21,6 +20,7 @@ import { GestionVehiculos } from "../aplicacion/casosUso/GestionVehiculos";
 import { Gestion_Viajes } from "../aplicacion/casosUso/Gestion_Viajes";
 import { CrearUbicacion } from "../aplicacion/casosUso/crearUbicacion";
 import { Login } from "../aplicacion/casosUso/Login";
+import { RecuperarContrasena } from "../aplicacion/casosUso/RecuperarContrasena";
 
 // ── Controladores ──────────────────────────────────────────────────────────────
 import { ConductorController } from "../controladores/conductorController";
@@ -31,6 +31,7 @@ import { RutaController } from "../controladores/rutaController";
 import { AlertaController } from "../controladores/alertaController";
 import { EventoController } from "../controladores/eventoController";
 import { AsignacionController } from "../controladores/asignacionController";
+import { UsuarioController } from "../controladores/usuarioController";
 
 const router = Router();
 
@@ -54,6 +55,7 @@ const gestionVehiculosUC = new GestionVehiculos(vehiculoRepo);
 const gestionViajesUC = new Gestion_Viajes(viajeRepo);
 const crearUbicacionUC = new CrearUbicacion(ubicacionRepo);
 const loginUC = new Login(usuarioRepo);
+const recuperarContrasenaUC = new RecuperarContrasena(usuarioRepo);
 
 const conductorCtrl = new ConductorController(crearConductorUC, gestionConductoresUC, obtenerConductoresUC);
 const vehiculoCtrl = new VehiculoController(gestionVehiculosUC);
@@ -63,19 +65,13 @@ const rutaCtrl = new RutaController(rutaRepo);
 const alertaCtrl = new AlertaController(alertaRepo);
 const eventoCtrl = new EventoController(eventoRepo);
 const asignacionCtrl = new AsignacionController(asignacionRepo);
+const usuarioCtrl = new UsuarioController(loginUC, recuperarContrasenaUC);
 
 // ──────────────────────────────────────────────────────────────────────────────
 // RUTAS — AUTENTICACIÓN
 // ──────────────────────────────────────────────────────────────────────────────
-router.post("/login", async (req, res) => {
-    const { email, password } = req.body;
-    try {
-        const usuario = await loginUC.ejecutar(email, password);
-        res.json({ mensaje: "Login exitoso", usuario });
-    } catch (error: any) {
-        res.status(401).json({ error: error.message });
-    }
-});
+router.post("/login", (req, res) => usuarioCtrl.login(req, res));
+router.post("/recuperar-contrasena", (req, res) => usuarioCtrl.recuperarContrasena(req, res));
 
 // ──────────────────────────────────────────────────────────────────────────────
 // RUTAS — CONDUCTORES
@@ -98,7 +94,7 @@ router.delete("/vehiculos/:placa", (req, res) => vehiculoCtrl.eliminar(req, res)
 // RUTAS — VIAJES
 // ──────────────────────────────────────────────────────────────────────────────
 router.post("/viajes", (req, res) => viajeCtrl.planificar(req, res));
-router.get("/viajes", (req, res) => viajeCtrl.listarTodos(req, res));        // ← NUEVO
+router.get("/viajes", (req, res) => viajeCtrl.listarTodos(req, res));
 router.get("/viajes/en-curso", (req, res) => viajeCtrl.listarEnCurso(req, res));
 router.get("/viajes/historial/:idConductor", (req, res) => viajeCtrl.historialConductor(req, res));
 router.patch("/viajes/:id/iniciar", (req, res) => viajeCtrl.iniciar(req, res));

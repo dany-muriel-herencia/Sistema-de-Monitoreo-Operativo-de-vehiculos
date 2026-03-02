@@ -7,8 +7,8 @@ import { EstadoVehiculo } from "../dominio/emuns/EstadoVehiculo";
 class VehiculoRepositorioMock implements Partial<IVehiculoRepositorio> {
     async obtenerTodos(): Promise<Vehiculo[]> {
         return [
-            new Vehiculo("1", "Toyota", "ABC-123", "Hilux", 5, 1000, EstadoVehiculo.Disponible, 2022),
-            new Vehiculo("2", "Volvo", "XYZ-789", "FH16", 20, 5000, EstadoVehiculo.Mantenimiento, 2021)
+            new Vehiculo(1, "Toyota", "ABC-123", "Hilux", 5, 1000, EstadoVehiculo.DISPONIBLE, 2022),
+            new Vehiculo(2, "Volvo", "XYZ-789", "FH16", 20, 5000, EstadoVehiculo.EN_MANTENIMIENTO, 2021)
         ];
     }
 }
@@ -26,7 +26,7 @@ async function probarDominio() {
         console.log(`✅ Éxito: Se recuperaron ${vehiculos.length} vehículos.`);
 
         vehiculos.forEach(v => {
-            console.log(`   - [${v.getplaca()}] ${v.getMarca()} ${v.getmodelo()} (Estado: ${v.getestado()})`);
+            console.log(`   - [${v.getPlaca()}] ${v.getMarca()} ${v.getModelo()} (Estado: ${v.getEstado()})`);
         });
 
     } catch (error) {
