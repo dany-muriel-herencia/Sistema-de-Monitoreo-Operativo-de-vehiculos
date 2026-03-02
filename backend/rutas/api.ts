@@ -23,6 +23,8 @@ import { Login } from "../aplicacion/casosUso/Login";
 import { RecuperarContrasena } from "../aplicacion/casosUso/RecuperarContrasena";
 import { MonitoreoRealTime } from "../aplicacion/casosUso/MonitoreoRealTime";
 
+import { ObtenerReportes } from "../aplicacion/casosUso/ObtenerReportes";
+
 // ── Controladores ──────────────────────────────────────────────────────────────
 import { ConductorController } from "../controladores/conductorController";
 import { VehiculoController } from "../controladores/vehiculoController";
@@ -33,6 +35,7 @@ import { AlertaController } from "../controladores/alertaController";
 import { EventoController } from "../controladores/eventoController";
 import { AsignacionController } from "../controladores/asignacionController";
 import { UsuarioController } from "../controladores/usuarioController";
+import { ReporteController } from "../controladores/reporteController";
 
 const router = Router();
 
@@ -58,6 +61,7 @@ const crearUbicacionUC = new CrearUbicacion(ubicacionRepo);
 const loginUC = new Login(usuarioRepo);
 const recuperarContrasenaUC = new RecuperarContrasena(usuarioRepo);
 const monitoreoUC = new MonitoreoRealTime(viajeRepo, ubicacionRepo, conductorRepo);
+const reportesUC = new ObtenerReportes(viajeRepo, vehiculoRepo, conductorRepo);
 
 const conductorCtrl = new ConductorController(crearConductorUC, gestionConductoresUC, obtenerConductoresUC);
 const vehiculoCtrl = new VehiculoController(gestionVehiculosUC);
@@ -68,6 +72,7 @@ const alertaCtrl = new AlertaController(alertaRepo);
 const eventoCtrl = new EventoController(eventoRepo);
 const asignacionCtrl = new AsignacionController(asignacionRepo);
 const usuarioCtrl = new UsuarioController(loginUC, recuperarContrasenaUC);
+const reporteCtrl = new ReporteController(reportesUC);
 
 // ──────────────────────────────────────────────────────────────────────────────
 // RUTAS — AUTENTICACIÓN
@@ -137,5 +142,9 @@ router.get("/eventos/viaje/:idViaje", (req, res) => eventoCtrl.obtenerPorViaje(r
 router.get("/asignaciones/conductor/:id", (req, res) => asignacionCtrl.historialConductor(req, res));
 router.get("/asignaciones/conductor/:id/activa", (req, res) => asignacionCtrl.activaConductor(req, res));
 router.get("/asignaciones/vehiculo/:placa/activa", (req, res) => asignacionCtrl.activaVehiculo(req, res));
+
+// ── RUTAS — REPORTES ───────────────────────────────────────────────────────────
+router.get("/reportes/resumen", (req, res) => reporteCtrl.obtenerResumen(req, res));
+router.get("/reportes/exportar", (req, res) => reporteCtrl.exportar(req, res));
 
 export default router;

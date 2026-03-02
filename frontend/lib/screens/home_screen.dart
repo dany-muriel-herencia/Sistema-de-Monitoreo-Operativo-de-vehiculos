@@ -5,6 +5,7 @@ import '../models/viaje.dart';
 import '../services/conductor_service.dart';
 import '../services/vehiculo_service.dart';
 import '../services/viaje_service.dart';
+import '../services/reporte_service.dart';
 import '../widgets/add_conductor_dialog.dart';
 import '../widgets/add_vehiculo_dialog.dart';
 import '../widgets/asignar_vehiculo_dialog.dart';
@@ -21,16 +22,18 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   final _conductorService = ConductorService();
   final _vehiculoService = VehiculoService();
   final _viajeService = ViajeService();
+  final _reporteService = ReporteService();
 
   late Future<List<Conductor>> _conductoresFuture;
   late Future<List<Vehiculo>> _vehiculosFuture;
   late Future<List<Viaje>> _viajesFuture;
   late Future<List<dynamic>> _monitoreoFuture;
+  late Future<Map<String, dynamic>> _reportesFuture;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
     _tabController.addListener(() {
       setState(() {});
     });
@@ -43,6 +46,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       _vehiculosFuture = _vehiculoService.obtenerVehiculos();
       _viajesFuture = _viajeService.obtenerViajes();
       _monitoreoFuture = _viajeService.obtenerMonitoreo();
+      _reportesFuture = _reporteService.obtenerResumenGeneral();
     });
   }
 
@@ -53,11 +57,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         title: const Text('Admin Dashboard'),
         bottom: TabBar(
           controller: _tabController,
+          isScrollable: true,
           tabs: const [
             Tab(icon: Icon(Icons.person), text: 'Conductores'),
             Tab(icon: Icon(Icons.directions_car), text: 'Vehículos'),
             Tab(icon: Icon(Icons.map), text: 'Viajes'),
             Tab(icon: Icon(Icons.track_changes), text: 'Monitoreo'),
+            Tab(icon: Icon(Icons.bar_chart), text: 'Reportes'),
           ],
         ),
         actions: [
@@ -75,9 +81,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           _buildVehiculoList(),
           _buildViajeList(),
           _buildMonitoreoList(),
+          _buildReportesView(),
         ],
       ),
-      floatingActionButton: _tabController.index == 3 ? null : FloatingActionButton.extended(
+      floatingActionButton: (_tabController.index == 3 || _tabController.index == 4) ? null : FloatingActionButton.extended(
         onPressed: () async {
           Widget dialog;
           if (_tabController.index == 0) {
@@ -106,6 +113,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     return 'Asignar / Planificar';
   }
 
+  // --- MÉTODOS DE CONSTRUCCIÓN DE LISTAS (Conductores, Vehículos, Viajes, Monitoreo igual que antes) ---
+  
   Widget _buildConductorList() {
     return FutureBuilder<List<Conductor>>(
       future: _conductoresFuture,
@@ -274,6 +283,112 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           },
         );
       },
+    );
+  }
+
+  Widget _buildReportesView() {
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _reportesFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+        if (snapshot.hasError) return _buildError(snapshot.error.toString());
+        
+        final data = snapshot.data!;
+        final stats = data['estadisticas'];
+        final ranking = data['rankingConductores'] as List;
+        final recientes = data['viajesRecientes'] as List;
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Resumen de Flota', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                childAspectRatio: 1.5,
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                children: [
+                   _buildStatCard('Total Viajes', stats['totalViajes'].toString(), Icons.history, Colors.blue),
+                   _buildStatCard('En Ruta', stats['vehiculosEnRuta'].toString(), Icons.local_shipping, Colors.orange),
+                   _buildStatCard('KM Totales', stats['kilometrajeFlota'].toString(), Icons.speed, Colors.green),
+                   _buildStatCard('Conductores', stats['totalConductores'].toString(), Icons.people, Colors.purple),
+                ],
+              ),
+              const SizedBox(height: 24),
+              const Text('Top 5 Conductores', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Card(
+                child: Column(
+                  children: ranking.map<Widget>((c) => ListTile(
+                    leading: const Icon(Icons.star, color: Colors.amber),
+                    title: Text(c['nombre']),
+                    trailing: Text('${c['viajes']} viajes', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  )).toList(),
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Text('Recientes', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Card(
+                child: Column(
+                  children: recientes.map<Widget>((v) => ListTile(
+                    title: Text('Viaje #${v['id']} - ${v['placa']}'),
+                    subtitle: Text('Estado: ${v['estado']}'),
+                    trailing: Text(v['fecha']?.toString().split('T')[0] ?? ''),
+                  )).toList(),
+                ),
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    final url = _reporteService.getExportUrl();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Descargando reporte desde: $url')),
+                    );
+                    // Como estamos en web, lo más sencillo es abrir la URL en otra pestaña
+                    // El navegador detectará que es un attachment y lo descargará.
+                  },
+                  icon: const Icon(Icons.download),
+                  label: const Text('Exportar Resumen a CSV'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 48),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+    return Card(
+      color: color.withOpacity(0.1),
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: color.withOpacity(0.2))),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color),
+            const SizedBox(height: 8),
+            Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
+            Text(title, style: TextStyle(fontSize: 12, color: color.withOpacity(0.8))),
+          ],
+        ),
+      ),
     );
   }
 
