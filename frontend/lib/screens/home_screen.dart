@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/conductor.dart';
 import '../models/vehiculo.dart';
@@ -9,6 +10,12 @@ import '../services/reporte_service.dart';
 import '../widgets/add_conductor_dialog.dart';
 import '../widgets/add_vehiculo_dialog.dart';
 import '../widgets/asignar_vehiculo_dialog.dart';
+import '../screens/admin/monitoreo_mapa_screen.dart';
+import '../screens/admin/crear_ruta_mapa_screen.dart';
+import '../models/ruta.dart';
+import '../services/ruta_service.dart';
+import '../widgets/add_ruta_dialog.dart';
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -23,21 +30,48 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   final _vehiculoService = VehiculoService();
   final _viajeService = ViajeService();
   final _reporteService = ReporteService();
+  final _rutaService = RutaService();
 
   late Future<List<Conductor>> _conductoresFuture;
   late Future<List<Vehiculo>> _vehiculosFuture;
   late Future<List<Viaje>> _viajesFuture;
+  late Future<List<Ruta>> _rutasFuture;
   late Future<List<dynamic>> _monitoreoFuture;
   late Future<Map<String, dynamic>> _reportesFuture;
+
+  // Timer para actualización en tiempo real del monitoreo
+  Timer? _monitoreoTimer;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 6, vsync: this);
     _tabController.addListener(() {
       setState(() {});
+      // Activa/desactiva el timer según la pestaña activa
+      if (_tabController.index == 4) {
+        _startMonitoreoTimer();
+      } else {
+        _monitoreoTimer?.cancel();
+      }
     });
     _refreshAll();
+  }
+
+  void _startMonitoreoTimer() {
+    _monitoreoTimer?.cancel();
+    _monitoreoTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      setState(() {
+        _monitoreoFuture = _viajeService.obtenerMonitoreo();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _monitoreoTimer?.cancel();
+    _tabController.dispose();
+    super.dispose();
   }
 
   void _refreshAll() {
@@ -45,7 +79,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       _conductoresFuture = _conductorService.obtenerConductores();
       _vehiculosFuture = _vehiculoService.obtenerVehiculos();
       _viajesFuture = _viajeService.obtenerViajes();
+      _rutasFuture = _rutaService.obtenerRutas();
       _monitoreoFuture = _viajeService.obtenerMonitoreo();
+
       _reportesFuture = _reporteService.obtenerResumenGeneral();
     });
   }
@@ -61,10 +97,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           tabs: const [
             Tab(icon: Icon(Icons.person), text: 'Conductores'),
             Tab(icon: Icon(Icons.directions_car), text: 'Vehículos'),
+            Tab(icon: Icon(Icons.route), text: 'Rutas'),
             Tab(icon: Icon(Icons.map), text: 'Viajes'),
             Tab(icon: Icon(Icons.track_changes), text: 'Monitoreo'),
             Tab(icon: Icon(Icons.bar_chart), text: 'Reportes'),
           ],
+
         ),
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _refreshAll),
@@ -79,26 +117,38 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         children: [
           _buildConductorList(),
           _buildVehiculoList(),
+          _buildRutaList(),
           _buildViajeList(),
           _buildMonitoreoList(),
           _buildReportesView(),
         ],
-      ),
-      floatingActionButton: (_tabController.index == 3 || _tabController.index == 4) ? null : FloatingActionButton.extended(
-        onPressed: () async {
-          Widget dialog;
-          if (_tabController.index == 0) {
-            dialog = const AddConductorDialog();
-          } else if (_tabController.index == 1) {
-            dialog = const AddVehiculoDialog();
-          } else {
-            dialog = const AsignarVehiculoDialog();
-          }
 
-          final result = await showDialog<bool>(
-            context: context,
-            builder: (context) => dialog,
-          );
+      ),
+      floatingActionButton: (_tabController.index >= 4) ? null : FloatingActionButton.extended(
+        onPressed: () async {
+          bool? result;
+
+          if (_tabController.index == 2) {
+            // Rutas: abrir pantalla del mapa para dibujar
+            result = await Navigator.push<bool>(
+              context,
+              MaterialPageRoute(builder: (_) => const CrearRutaMapaScreen()),
+            );
+          } else {
+            // Conductores, Vehículos, Viajes: dialog normal
+            Widget dialog;
+            if (_tabController.index == 0) {
+              dialog = const AddConductorDialog();
+            } else if (_tabController.index == 1) {
+              dialog = const AddVehiculoDialog();
+            } else {
+              dialog = const AsignarVehiculoDialog();
+            }
+            result = await showDialog<bool>(
+              context: context,
+              builder: (context) => dialog,
+            );
+          }
           if (result == true) _refreshAll();
         },
         label: Text(_getActionLabel()),
@@ -110,8 +160,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   String _getActionLabel() {
     if (_tabController.index == 0) return 'Nuevo Conductor';
     if (_tabController.index == 1) return 'Nuevo Vehículo';
+    if (_tabController.index == 2) return 'Nueva Ruta';
     return 'Asignar / Planificar';
   }
+
 
   // --- MÉTODOS DE CONSTRUCCIÓN DE LISTAS (Conductores, Vehículos, Viajes, Monitoreo igual que antes) ---
   
@@ -187,9 +239,102 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ),
                 title: Text('${item.marca} ${item.modelo}'),
                 subtitle: Text('Placa: ${item.placa}\nEstado: ${item.estado}'),
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () => _confirmDeleteVehiculo(item),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit, color: Colors.blue),
+                      onPressed: () async {
+                        final result = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AddVehiculoDialog(vehiculo: item),
+                        );
+                        if (result == true) _refreshAll();
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () => _confirmDeleteVehiculo(item),
+                    ),
+                  ],
+                ),
+              ),
+            );
+
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildRutaList() {
+    return FutureBuilder<List<Ruta>>(
+      future: _rutasFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+        if (snapshot.hasError) return _buildError(snapshot.error.toString());
+        final items = snapshot.data ?? [];
+        if (items.isEmpty) return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.route, size: 64, color: Colors.grey),
+              const SizedBox(height: 12),
+              const Text('No hay rutas creadas.', style: TextStyle(color: Colors.grey)),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  final result = await Navigator.push<bool>(
+                    context,
+                    MaterialPageRoute(builder: (_) => const CrearRutaMapaScreen()),
+                  );
+                  if (result == true) _refreshAll();
+                },
+                icon: const Icon(Icons.add_location_alt),
+                label: const Text('Crear primera ruta'),
+              ),
+            ],
+          ),
+        );
+
+        return ListView.builder(
+          itemCount: items.length,
+          itemBuilder: (context, index) {
+            final item = items[index];
+            return Card(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: Colors.blue.shade100,
+                  child: Icon(Icons.route, color: Colors.blue.shade700),
+                ),
+                title: Text(item.nombre, style: const TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: Text(
+                  '${item.distanciaTotal.toStringAsFixed(1)} km  •  ${item.duracionEstimadaMinutos} min  •  ${item.puntos.length} puntos',
+                ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Ver ruta en el mapa
+                    IconButton(
+                      icon: const Icon(Icons.map, color: Colors.blue),
+                      tooltip: 'Ver en mapa',
+                      onPressed: () async {
+                        final result = await Navigator.push<bool>(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => CrearRutaMapaScreen(rutaExistente: item),
+                          ),
+                        );
+                        if (result == true) _refreshAll();
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      tooltip: 'Eliminar',
+                      onPressed: () => _confirmDeleteRuta(item),
+                    ),
+                  ],
                 ),
               ),
             );
@@ -198,6 +343,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       },
     );
   }
+
 
   Widget _buildViajeList() {
     return FutureBuilder<List<Viaje>>(
@@ -218,20 +364,29 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 leading: const CircleAvatar(child: Icon(Icons.map)),
                 title: Text('Viaje #${item.id}'),
                 subtitle: Text('Estado: ${item.estado}\nConductor: ${item.conductorId}\nVehículo: ${item.vehiculoId}'),
-                trailing: (item.estado == 'PLANIFICADO') 
-                  ? IconButton(
-                      icon: const Icon(Icons.edit, color: Colors.blue),
-                      onPressed: () async {
-                        final result = await showDialog<bool>(
-                          context: context,
-                          builder: (context) => AsignarVehiculoDialog(viaje: item),
-                        );
-                        if (result == true) _refreshAll();
-                      },
-                    )
-                  : null,
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (item.estado == 'PLANIFICADO') 
+                      IconButton(
+                        icon: const Icon(Icons.edit, color: Colors.blue),
+                        onPressed: () async {
+                          final result = await showDialog<bool>(
+                            context: context,
+                            builder: (context) => AsignarVehiculoDialog(viaje: item),
+                          );
+                          if (result == true) _refreshAll();
+                        },
+                      ),
+                    IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () => _confirmDeleteViaje(item),
+                    ),
+                  ],
+                ),
               ),
             );
+
           },
         );
       },
@@ -247,40 +402,66 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         final items = snapshot.data ?? [];
         if (items.isEmpty) return const Center(child: Text('No hay viajes activos en este momento.'));
 
-        return ListView.builder(
-          itemCount: items.length,
-          itemBuilder: (context, index) {
-            final item = items[index];
-            final ubicacion = item['ultimaUbicacion'];
-            
-            return Card(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: ExpansionTile(
-                leading: const Icon(Icons.satellite_alt, color: Colors.blue),
-                title: Text('Vehículo: ${item['placa']}'),
-                subtitle: Text('Conductor: ${item['conductor']}'),
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => MonitoreoMapaScreen(monitoreoData: items),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.map_outlined),
+                label: const Text('Ver todos en el Mapa'),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
+                  backgroundColor: Colors.blue.shade700,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                itemCount: items.length,
+                itemBuilder: (context, index) {
+                  final item = items[index];
+                  final ubicacion = item['ultimaUbicacion'];
+                  
+                  return Card(
+                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: ExpansionTile(
+                      leading: const Icon(Icons.satellite_alt, color: Colors.blue),
+                      title: Text('Vehículo: ${item['placa']}'),
+                      subtitle: Text('Conductor: ${item['conductor']}'),
                       children: [
-                        if (ubicacion != null) ...[
-                          Text('Latitud: ${ubicacion['latitud']}'),
-                          Text('Longitud: ${ubicacion['longitud']}'),
-                          Text('Velocidad: ${ubicacion['velocidad']} km/h'),
-                          Text('Último reporte: ${ubicacion['timestamp']}'),
-                        ] else
-                          const Text('Esperando primer reporte de GPS...', style: TextStyle(color: Colors.orange)),
-                        const SizedBox(height: 8),
-                        Text('ID Viaje: ${item['idViaje']}'),
+                        Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (ubicacion != null) ...[
+                                Text('Latitud: ${ubicacion['latitud']}'),
+                                Text('Longitud: ${ubicacion['longitud']}'),
+                                Text('Velocidad: ${ubicacion['velocidad']} km/h'),
+                                Text('Último reporte: ${ubicacion['timestamp']}'),
+                              ] else
+                                const Text('Esperando primer reporte de GPS...', style: TextStyle(color: Colors.orange)),
+                              const SizedBox(height: 8),
+                              Text('ID Viaje: ${item['idViaje']}'),
+                            ],
+                          ),
+                        )
                       ],
                     ),
-                  )
-                ],
+                  );
+                },
               ),
-            );
-          },
+            ),
+          ],
         );
       },
     );
@@ -459,6 +640,58 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       ),
     );
   }
+
+  void _confirmDeleteRuta(Ruta item) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Eliminar Ruta'),
+        content: Text('¿Eliminar la ruta "${item.nombre}"?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('No')),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              try {
+                await _rutaService.eliminarRuta(item.id);
+                _refreshAll();
+              } catch (e) {
+                _showErrorSnackBar(e.toString());
+              }
+            },
+            child: const Text('Sí, eliminar', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDeleteViaje(Viaje item) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Eliminar Viaje'),
+        content: Text('¿Eliminar el viaje #${item.id}?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('No')),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              try {
+                await _viajeService.eliminarViaje(item.id);
+                _refreshAll();
+              } catch (e) {
+                _showErrorSnackBar(e.toString());
+              }
+            },
+            child: const Text('Sí, eliminar', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+
 
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(

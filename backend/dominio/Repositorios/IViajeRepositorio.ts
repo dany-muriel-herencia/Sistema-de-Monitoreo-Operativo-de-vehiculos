@@ -8,4 +8,6 @@ export interface IViajeRepositorio {
     actualizar(viaje: Viaje): Promise<void>;
     listarEnCurso(): Promise<Viaje[]>;
     obtenerHistorialConductor(idConductor: string): Promise<Viaje[]>;
+    eliminar(id: string): Promise<void>;
 }
+

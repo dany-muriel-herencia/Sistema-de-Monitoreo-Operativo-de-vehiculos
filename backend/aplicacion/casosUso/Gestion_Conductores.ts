@@ -1,4 +1,4 @@
-import { Conductor } from "../../dominio/Entidades/Conductor";
+import { Conductor } from "../../dominio/Entidades/Conductores";
 import { IConductorRepositorio } from "../../dominio/Repositorios/IConductorRepositorio";
 
 export class Gestion_Conductores {

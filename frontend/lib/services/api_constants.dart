@@ -8,4 +8,11 @@ class ApiConstants {
   static const String viajes = '$baseUrl/viajes';
   static const String ubicaciones = '$baseUrl/ubicaciones';
   static const String reportes = '$baseUrl/reportes';
+  static const String rutas = '$baseUrl/rutas';
+  static const String incidencias = '$baseUrl/incidencias';
+  static const String enums = '$baseUrl/enums';
+  static const String alertas = '$baseUrl/alertas';
+  static const String eventos = '$baseUrl/eventos';
 }
+
+

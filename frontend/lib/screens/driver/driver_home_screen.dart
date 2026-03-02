@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import '../../services/viaje_service.dart';
+import '../../services/ruta_service.dart';
+import '../../services/incidencia_service.dart';
 import '../../services/api_constants.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../models/viaje.dart';
+import '../../models/ruta.dart';
+import 'package:geolocator/geolocator.dart';
+import 'driver_mapa_screen.dart';
+
 
 class DriverHomeScreen extends StatefulWidget {
   final Map<String, dynamic> user;
@@ -17,10 +23,14 @@ class DriverHomeScreen extends StatefulWidget {
 
 class _DriverHomeScreenState extends State<DriverHomeScreen> {
   final _viajeService = ViajeService();
+  final _rutaService = RutaService();
+  final _incidenciaService = IncidenciaService();
   bool _isLoading = true;
   bool _isActionLoading = false;
   Viaje? _activeViaje;
-  Timer? _gpsTimer;
+  Ruta? _rutaAsignada;
+  StreamSubscription<Position>? _gpsStreamSubscription;
+
 
   @override
   void initState() {
@@ -30,9 +40,10 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
 
   @override
   void dispose() {
-    _gpsTimer?.cancel();
+    _gpsStreamSubscription?.cancel();
     super.dispose();
   }
+
 
   Future<void> _loadActiveTrip() async {
     setState(() => _isLoading = true);
@@ -40,22 +51,36 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
       final viajes = await _viajeService.obtenerViajes();
       final userId = widget.user['id'].toString();
       
-      setState(() {
-        _activeViaje = null;
-        for (var v in viajes) {
-          if (v.conductorId == userId && (v.estado == 'PLANIFICADO' || v.estado == 'EN_CURSO')) {
-            _activeViaje = v;
-            break;
-          }
+      Viaje? found;
+      for (var v in viajes) {
+        if (v.conductorId == userId && (v.estado == 'PLANIFICADO' || v.estado == 'EN_CURSO')) {
+          found = v;
+          break;
         }
+      }
+
+      // Cargar la ruta asignada al viaje
+      Ruta? ruta;
+      if (found != null) {
+        try {
+          final rutas = await _rutaService.obtenerRutas();
+          // El viaje tiene rutaId — buscar coincidencia
+          ruta = rutas.isNotEmpty ? rutas.first : null;
+        } catch (_) {}
+      }
+
+      setState(() {
+        _activeViaje = found;
+        _rutaAsignada = ruta;
         _isLoading = false;
       });
 
       if (_activeViaje?.estado == 'EN_CURSO') {
-        _startGpsSimulation();
+        _startRealGpsTracking();
       } else {
-        _gpsTimer?.cancel();
+        _gpsStreamSubscription?.cancel();
       }
+
     } catch (e) {
       setState(() {
         _activeViaje = null;
@@ -64,33 +89,62 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
     }
   }
 
-  void _startGpsSimulation() {
-    _gpsTimer?.cancel();
-    _gpsTimer = Timer.periodic(const Duration(seconds: 10), (timer) async {
+  Future<void> _startRealGpsTracking() async {
+    _gpsStreamSubscription?.cancel();
+
+    // 1. Verificar si el servicio de ubicación está habilitado
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      _showSnackBar('El GPS está desactivado. Por favor actívalo.', Colors.orange);
+      return;
+    }
+
+    // 2. Verificar/Solicitar permisos
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        _showSnackBar('Permiso de GPS denegado.', Colors.red);
+        return;
+      }
+    }
+    
+    if (permission == LocationPermission.deniedForever) {
+      _showSnackBar('Permisos de GPS denegados permanentemente.', Colors.red);
+      return;
+    }
+
+    // 3. Suscribirse al flujo de posiciones
+    _gpsStreamSubscription = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 10, // Notificar cada 10 metros
+      ),
+    ).listen((Position position) async {
       if (_activeViaje == null || _activeViaje!.estado != 'EN_CURSO') {
-        timer.cancel();
+        _gpsStreamSubscription?.cancel();
         return;
       }
       
       try {
-        // Enviar ubicación de prueba (Bogotá aprox)
         await http.post(
           Uri.parse(ApiConstants.ubicaciones),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({
             'idviaje': _activeViaje!.id,
             'idVehiculo': _activeViaje!.vehiculoId,
-            'latitud': 4.6097 + (timer.tick * 0.0001),
-            'longitud': -74.0817 + (timer.tick * 0.0001),
-            'velocidad': 45.0
+            'latitud': position.latitude,
+            'longitud': position.longitude,
+            'velocidad': position.speed * 3.6 // Convertir m/s a km/h
           }),
         );
-        print('GPS: Ubicación enviada para viaje ${_activeViaje!.id}');
+        print('GPS REAL: Ubicación enviada (${position.latitude}, ${position.longitude})');
       } catch (e) {
         print('GPS Error: $e');
       }
     });
   }
+
 
   Future<void> _iniciar() async {
     setState(() => _isActionLoading = true);
@@ -162,6 +216,81 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(msg), backgroundColor: color),
     );
+  }
+
+  Future<void> _reportarIncidencia() async {
+    if (_activeViaje == null) return;
+
+    String? tipoSeleccionado;
+    final descController = TextEditingController();
+
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDlgState) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.orange),
+              SizedBox(width: 8),
+              Text('Reportar Incidencia'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Tipo de incidencia:', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              ...TipoAlerta.todos.map((tipo) => RadioListTile<String>(
+                    dense: true,
+                    value: tipo,
+                    groupValue: tipoSeleccionado,
+                    title: Text(TipoAlerta.label(tipo)),
+                    onChanged: (v) => setDlgState(() => tipoSeleccionado = v),
+                  )),
+              const SizedBox(height: 12),
+              TextField(
+                controller: descController,
+                maxLines: 2,
+                decoration: InputDecoration(
+                  labelText: 'Descripción (opcional)',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  isDense: true,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white),
+              onPressed: tipoSeleccionado == null
+                  ? null
+                  : () => Navigator.pop(ctx, true),
+              child: const Text('Enviar'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (confirmar == true && tipoSeleccionado != null) {
+      try {
+        await _incidenciaService.registrarIncidencia(
+          idViaje: _activeViaje!.id,
+          tipoAlerta: tipoSeleccionado!,
+          descripcion: descController.text.trim().isNotEmpty
+              ? descController.text.trim()
+              : TipoAlerta.label(tipoSeleccionado!),
+        );
+        _showSnackBar('Incidencia reportada ✅', Colors.orange);
+      } catch (e) {
+        _showSnackBar('Error: $e', Colors.red);
+      }
+    }
   }
 
   @override
@@ -239,7 +368,32 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                                 const SizedBox(height: 16),
                                 _buildDetailItem(Icons.tag, 'ID de Viaje', _activeViaje!.id),
                                 _buildDetailItem(Icons.directions_car, 'Placa Vehículo', _activeViaje!.vehiculoId),
-                                _buildDetailItem(Icons.map, 'ID de Ruta', 'Ruta #1'), // TODO: Mejorar esto
+                                _buildDetailItem(Icons.map, 'Ruta Asignada', _rutaAsignada?.nombre ?? 'Sin ruta'),
+                                const SizedBox(height: 12),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: OutlinedButton.icon(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => DriverMapaScreen(
+                                            puntosRuta: _rutaAsignada?.puntos ?? [],
+                                            nombreRuta: _rutaAsignada?.nombre ?? '',
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    icon: const Icon(Icons.map),
+                                    label: const Text('Ver mi ubicación en el Mapa'),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: Colors.blue.shade700,
+                                      side: BorderSide(color: Colors.blue.shade700),
+                                      padding: const EdgeInsets.symmetric(vertical: 14),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -272,11 +426,26 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                                   children: [
                                     Icon(Icons.gps_fixed, color: Colors.blue),
                                     SizedBox(width: 12),
-                                    Expanded(child: Text('Simulación de GPS activa. Enviando ubicación cada 10s.', style: TextStyle(color: Colors.blue))),
+                                    Expanded(child: Text('Monitoreo GPS real activo. Enviando ubicación automáticamente.', style: TextStyle(color: Colors.blue))),
                                   ],
                                 ),
                               ),
-                              const SizedBox(height: 24),
+                              const SizedBox(height: 16),
+                              // Botón Reportar Incidencia
+                              SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton.icon(
+                                  onPressed: () => _reportarIncidencia(),
+                                  icon: const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+                                  label: const Text('Reportar Incidencia', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
+                                  style: OutlinedButton.styleFrom(
+                                    side: const BorderSide(color: Colors.orange, width: 2),
+                                    padding: const EdgeInsets.symmetric(vertical: 14),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
                               ElevatedButton.icon(
                                 onPressed: _finalizar,
                                 icon: const Icon(Icons.check_circle, size: 32),

@@ -1,6 +1,6 @@
 import { Usuario } from "./usuarios";
 import { Vehiculo } from "./Vehiculo";
-import { Conductor } from "./Conductor";
+import { Conductor } from "./Conductores";
 import { Ruta } from "./Ruta";
 import { AsignacionConductor } from "./AsignacionConductor";
 import { AlertaRuta } from "./AlertaRuta";

@@ -51,4 +51,22 @@ class VehiculoService {
       rethrow;
     }
   }
+
+  Future<void> actualizarVehiculo(String placa, Map<String, dynamic> datos) async {
+    try {
+      final response = await http.put(
+        Uri.parse('${ApiConstants.vehiculos}/$placa'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(datos),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Error al actualizar vehículo: ${response.body}');
+      }
+    } catch (e) {
+      print('VehiculoService.actualizarVehiculo Error: $e');
+      rethrow;
+    }
+  }
 }
+

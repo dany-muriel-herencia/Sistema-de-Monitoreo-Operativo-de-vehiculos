@@ -1,8 +1,8 @@
 import { IConductorRepositorio } from "../../dominio/Repositorios/IConductorRepositorio";
-import { Conductor } from "../../dominio/Entidades/Conductor";
+import { Conductor } from "../../dominio/Entidades/Conductores";
 
 export class ObtenerConductores {
-    constructor(private conductorRepo: IConductorRepositorio) {}
+    constructor(private conductorRepo: IConductorRepositorio) { }
 
     async ejecutar(): Promise<Conductor[]> {
         return await this.conductorRepo.obtenerTodos();

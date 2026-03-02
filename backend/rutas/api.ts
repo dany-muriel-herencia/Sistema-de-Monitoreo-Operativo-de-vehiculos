@@ -22,8 +22,10 @@ import { CrearUbicacion } from "../aplicacion/casosUso/crearUbicacion";
 import { Login } from "../aplicacion/casosUso/Login";
 import { RecuperarContrasena } from "../aplicacion/casosUso/RecuperarContrasena";
 import { MonitoreoRealTime } from "../aplicacion/casosUso/MonitoreoRealTime";
-
 import { ObtenerReportes } from "../aplicacion/casosUso/ObtenerReportes";
+import { CrearRuta } from "../aplicacion/casosUso/crearRuta";
+import { RegistrarIncidencia } from "../aplicacion/casosUso/RegistrarIncidencia";
+
 
 // ── Controladores ──────────────────────────────────────────────────────────────
 import { ConductorController } from "../controladores/conductorController";
@@ -36,6 +38,7 @@ import { EventoController } from "../controladores/eventoController";
 import { AsignacionController } from "../controladores/asignacionController";
 import { UsuarioController } from "../controladores/usuarioController";
 import { ReporteController } from "../controladores/reporteController";
+import { IncidenciaController } from "../controladores/incidenciaController";
 
 const router = Router();
 
@@ -56,23 +59,27 @@ const crearConductorUC = new CrearConductor(conductorRepo);
 const obtenerConductoresUC = new ObtenerConductores(conductorRepo);
 const gestionConductoresUC = new Gestion_Conductores(conductorRepo);
 const gestionVehiculosUC = new GestionVehiculos(vehiculoRepo);
-const gestionViajesUC = new Gestion_Viajes(viajeRepo);
-const crearUbicacionUC = new CrearUbicacion(ubicacionRepo);
+const gestionViajesUC = new Gestion_Viajes(viajeRepo, vehiculoRepo);  // ahora gestiona el estado del vehículo
+const crearUbicacionUC = new CrearUbicacion(ubicacionRepo, alertaRepo, eventoRepo, viajeRepo); // detección de alertas automáticas
 const loginUC = new Login(usuarioRepo);
 const recuperarContrasenaUC = new RecuperarContrasena(usuarioRepo);
 const monitoreoUC = new MonitoreoRealTime(viajeRepo, ubicacionRepo, conductorRepo);
 const reportesUC = new ObtenerReportes(viajeRepo, vehiculoRepo, conductorRepo);
+const crearRutaUC = new CrearRuta(rutaRepo);
+const registrarIncidenciaUC = new RegistrarIncidencia(viajeRepo, alertaRepo, eventoRepo);
+
 
 const conductorCtrl = new ConductorController(crearConductorUC, gestionConductoresUC, obtenerConductoresUC);
 const vehiculoCtrl = new VehiculoController(gestionVehiculosUC);
 const viajeCtrl = new ViajeController(gestionViajesUC, gestionConductoresUC, gestionVehiculosUC, monitoreoUC);
 const ubicacionCtrl = new UbicacionController(crearUbicacionUC, ubicacionRepo);
-const rutaCtrl = new RutaController(rutaRepo);
+const rutaCtrl = new RutaController(rutaRepo, crearRutaUC);
 const alertaCtrl = new AlertaController(alertaRepo);
 const eventoCtrl = new EventoController(eventoRepo);
 const asignacionCtrl = new AsignacionController(asignacionRepo);
 const usuarioCtrl = new UsuarioController(loginUC, recuperarContrasenaUC);
 const reporteCtrl = new ReporteController(reportesUC);
+const incidenciaCtrl = new IncidenciaController(registrarIncidenciaUC);
 
 // ──────────────────────────────────────────────────────────────────────────────
 // RUTAS — AUTENTICACIÓN
@@ -97,6 +104,8 @@ router.post("/vehiculos", (req, res) => vehiculoCtrl.crear(req, res));
 router.get("/vehiculos", (req, res) => vehiculoCtrl.listar(req, res));
 router.get("/vehiculos/:placa", (req, res) => vehiculoCtrl.obtenerPorPlaca(req, res));
 router.delete("/vehiculos/:placa", (req, res) => vehiculoCtrl.eliminar(req, res));
+router.put("/vehiculos/:placa", (req, res) => vehiculoCtrl.actualizar(req, res));
+
 
 // ──────────────────────────────────────────────────────────────────────────────
 // RUTAS — VIAJES
@@ -107,15 +116,21 @@ router.get("/viajes/en-curso", (req, res) => viajeCtrl.listarEnCurso(req, res));
 router.get("/viajes/historial/:idConductor", (req, res) => viajeCtrl.historialConductor(req, res));
 router.patch("/viajes/:id/iniciar", (req, res) => viajeCtrl.iniciar(req, res));
 router.patch("/viajes/:id/finalizar", (req, res) => viajeCtrl.finalizar(req, res));
+router.patch("/viajes/:id/cancelar", (req, res) => viajeCtrl.cancelar(req, res));  // ← nuevo
 router.put("/viajes/:id", (req, res) => viajeCtrl.actualizarAsignacion(req, res));
 router.get("/monitoreo", (req, res) => viajeCtrl.monitoreo(req, res));
+router.delete("/viajes/:id", (req, res) => viajeCtrl.eliminar(req, res));
+
 
 // ──────────────────────────────────────────────────────────────────────────────
 // RUTAS — RUTAS DE TRANSPORTE
 // ──────────────────────────────────────────────────────────────────────────────
+router.post("/rutas", (req, res) => rutaCtrl.registrar(req, res));
 router.get("/rutas", (req, res) => rutaCtrl.listar(req, res));
 router.get("/rutas/:id", (req, res) => rutaCtrl.obtenerPorId(req, res));
 router.delete("/rutas/:id", (req, res) => rutaCtrl.eliminar(req, res));
+router.put("/rutas/:id", (req, res) => rutaCtrl.actualizar(req, res));
+
 
 // ──────────────────────────────────────────────────────────────────────────────
 // RUTAS — UBICACIONES GPS
@@ -146,5 +161,16 @@ router.get("/asignaciones/vehiculo/:placa/activa", (req, res) => asignacionCtrl.
 // ── RUTAS — REPORTES ───────────────────────────────────────────────────────────
 router.get("/reportes/resumen", (req, res) => reporteCtrl.obtenerResumen(req, res));
 router.get("/reportes/exportar", (req, res) => reporteCtrl.exportar(req, res));
+
+// ──────────────────────────────────────────────────────────────────────────────
+// RUTAS — INCIDENCIAS (usa TipoAlerta + TipoEvento del dominio)
+// ──────────────────────────────────────────────────────────────────────────────
+router.post("/incidencias", (req, res) => incidenciaCtrl.registrar(req, res));
+
+// ──────────────────────────────────────────────────────────────────────────────
+// RUTA — ENUMS (catálogos para el frontend)
+// GET /enums → { EstadoVehiculo, EstadoViaje, TipoAlerta, TipoEvento }
+// ──────────────────────────────────────────────────────────────────────────────
+router.get("/enums", (req, res) => incidenciaCtrl.obtenerEnums(req, res));
 
 export default router;

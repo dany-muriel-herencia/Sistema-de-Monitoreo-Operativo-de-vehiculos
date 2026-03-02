@@ -113,7 +113,6 @@ export class ViajeController {
         }
     }
 
-    // PUT /viajes/:id — actualizar asignación (conductor/vehículo)
     async actualizarAsignacion(req: Request, res: Response): Promise<void> {
         try {
             const idViaje = req.params.id as string;
@@ -122,6 +121,29 @@ export class ViajeController {
             res.status(200).json({ mensaje: "Asignación del viaje actualizada" });
         } catch (error: any) {
             res.status(400).json({ error: error.message });
+        }
+    }
+
+    // PATCH /viajes/:id/cancelar — cancelar un viaje PLANIFICADO
+    async cancelar(req: Request, res: Response): Promise<void> {
+        try {
+            const idViaje = req.params.id as string;
+            const { motivo } = req.body;
+            await this.gestionViajesUC.cancelarViaje(idViaje, motivo ?? 'Sin motivo especificado');
+            res.status(200).json({ mensaje: `Viaje ${idViaje} cancelado` });
+        } catch (error: any) {
+            res.status(400).json({ error: error.message });
+        }
+    }
+
+    // DELETE /viajes/:id — eliminar un viaje
+    async eliminar(req: Request, res: Response): Promise<void> {
+        try {
+            const id = req.params.id as string;
+            await this.gestionViajesUC.eliminarViaje(id);
+            res.status(200).json({ mensaje: `Viaje ${id} eliminado` });
+        } catch (error: any) {
+            res.status(500).json({ error: error.message });
         }
     }
 }

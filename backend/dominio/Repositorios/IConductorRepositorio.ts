@@ -1,4 +1,4 @@
-import { Conductor } from "../Entidades/Conductor";
+import { Conductor } from "../Entidades/Conductores";
 
 export interface IConductorRepositorio {
     guardar(conductor: Conductor): Promise<void>;

@@ -1,6 +1,6 @@
 // infraestructura/repositorios/ConductorRepositorio.ts
 import { IConductorRepositorio } from "../../dominio/Repositorios/IConductorRepositorio";
-import { Conductor } from "../../dominio/Entidades/Conductor";
+import { Conductor } from "../../dominio/Entidades/Conductores";
 import { pool } from "../../db";
 
 export class ConductorRepositorio implements IConductorRepositorio {

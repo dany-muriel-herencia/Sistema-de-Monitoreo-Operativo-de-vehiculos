@@ -127,4 +127,9 @@ export class ViajeRepositorio implements IViajeRepositorio {
         );
         return rows.map((row: any) => this.mapearVehiculoFila(row));
     }
+
+    async eliminar(id: string): Promise<void> {
+        await pool.query('DELETE FROM viajes WHERE id = ?', [id]);
+    }
 }
+

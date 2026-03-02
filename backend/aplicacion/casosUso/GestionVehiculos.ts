@@ -33,4 +33,10 @@ export class GestionVehiculos {
         await this.repository.eliminar(placa);
         console.log(`Vehículo ${placa} eliminado del sistema.`);
     }
+
+    async actualizarVehiculo(vehiculo: Vehiculo): Promise<void> {
+        await this.repository.actualizar(vehiculo);
+        console.log(`Vehículo ${vehiculo.getPlaca()} actualizado.`);
+    }
 }
+

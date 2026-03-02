@@ -105,4 +105,19 @@ class ViajeService {
       rethrow;
     }
   }
+
+  Future<void> eliminarViaje(String id) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('${ApiConstants.baseUrl}/viajes/$id'),
+      );
+      if (response.statusCode != 200) {
+        throw Exception('Error al eliminar viaje: ${response.body}');
+      }
+    } catch (e) {
+      print('ViajeService.eliminarViaje Error: $e');
+      rethrow;
+    }
+  }
 }
+

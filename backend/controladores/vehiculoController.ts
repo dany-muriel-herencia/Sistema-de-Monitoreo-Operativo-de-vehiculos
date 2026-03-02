@@ -83,7 +83,6 @@ export class VehiculoController {
         }
     }
 
-    // DELETE /vehiculos/:placa  — eliminar vehículo
     async eliminar(req: Request, res: Response): Promise<void> {
         try {
             const placa = req.params.placa as string;
@@ -93,6 +92,31 @@ export class VehiculoController {
         } catch (error: any) {
             console.error("Error al eliminar vehículo:", error);
             res.status(500).json({ error: error.message });
+        }
+    }
+
+    // PUT /vehiculos/:placa — actualizar vehículo
+    async actualizar(req: Request, res: Response): Promise<void> {
+        try {
+            const placaExistente = req.params.placa as string;
+            const { marca, modelo, capacidad, kilometraje, anio, año, estado } = req.body;
+
+            const vehiculo = new Vehiculo(
+                null,
+                marca,
+                placaExistente,
+                modelo,
+                Number(capacidad),
+                Number(kilometraje),
+                estado as EstadoVehiculo,
+                Number(anio ?? año ?? 0)
+            );
+
+            await this.gestionVehiculosUC.actualizarVehiculo(vehiculo);
+            res.status(200).json({ mensaje: `Vehículo ${placaExistente} actualizado` });
+        } catch (error: any) {
+            console.error("Error al actualizar vehículo:", error);
+            res.status(400).json({ error: error.message });
         }
     }
 }

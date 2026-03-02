@@ -1,4 +1,4 @@
-import { Conductor } from "../Entidades/Conductor";
+import { Conductor } from "../Entidades/Conductores";
 import { Vehiculo } from "../Entidades/Vehiculo";
 import { AsignacionConductor } from "../Entidades/AsignacionConductor";
 
@@ -22,7 +22,7 @@ export class AsignadorConductor {
         const idAsignacion = Math.random().toString(36).substr(2, 9);
         const nuevaAsignacion = new AsignacionConductor(
             idAsignacion,
-            conductor.getId(),
+            conductor.getId()?.toString() ?? '',   // number|null → string
             vehiculo.getId()?.toString() || "",
             new Date()
         );
