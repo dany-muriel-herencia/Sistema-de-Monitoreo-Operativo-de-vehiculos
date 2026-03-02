@@ -39,10 +39,10 @@ class Viaje {
 
   factory Viaje.fromJson(Map<String, dynamic> json) {
     return Viaje(
-      id: json['id'] ?? 0,
-      vehiculoId: json['vehiculo_id'] ?? json['idVehiculo'] ?? 0,
-      conductorId: json['conductor_id'] ?? json['idConductor'] ?? 0,
-      rutaId: json['ruta_id'] ?? json['idRuta'] ?? 0,
+      id: int.tryParse(json['id'].toString()) ?? 0,
+      vehiculoId: int.tryParse((json['vehiculo_id'] ?? json['idVehiculo'] ?? 0).toString()) ?? 0,
+      conductorId: int.tryParse((json['conductor_id'] ?? json['idConductor'] ?? 0).toString()) ?? 0,
+      rutaId: int.tryParse((json['ruta_id'] ?? json['idRuta'] ?? 0).toString()) ?? 0,
       fechaHoraInicio: json['fecha_hora_inicio'] != null
           ? DateTime.parse(json['fecha_hora_inicio'])
           : json['fechaInicio'] != null 

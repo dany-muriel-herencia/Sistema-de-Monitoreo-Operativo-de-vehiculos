@@ -6,16 +6,16 @@ import { EstadoViaje } from "../emuns/EstadoViaje";
 
 export class Viaje {
 
-    private id: string;
-    private idConductor: string;
-    private idVehiculo: string;
-    private idRuta: string;
-    private estado: EstadoViaje;
-    private fechaInicio: Date | null;
-    private fechaFin: Date | null;
+    public id: string;
+    public idConductor: string;
+    public idVehiculo: string;
+    public idRuta: string;
+    public estado: EstadoViaje;
+    public fechaInicio: Date | null;
+    public fechaFin: Date | null;
 
-    private eventos: EventoOperacion[];
-    private alertas: AlertaRuta[];
+    public eventos: EventoOperacion[];
+    public alertas: AlertaRuta[];
 
     constructor(
         id: string,

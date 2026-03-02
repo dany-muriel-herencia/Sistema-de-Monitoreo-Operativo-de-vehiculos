@@ -1,12 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/ubicacion.dart';
 
 class ApiService {
   static final ApiService _instance = ApiService._internal();
   factory ApiService() => _instance;
-  Dio dio = Dio();
+  final Dio dio = Dio();
 
   ApiService._internal() {
     dio.options.baseUrl = 'http://localhost:3000/api';
@@ -25,74 +24,52 @@ class ApiService {
     ));
 
     if (kDebugMode) {
-      dio.interceptors.add(LogInterceptor(responseBody: true));
+      dio.interceptors.add(LogInterceptor(
+        requestHeader: true,
+        requestBody: true,
+        responseBody: true,
+        error: true,
+      ));
     }
   }
 
-  Future<Map<String, dynamic>> login(String email, String password) async {
-    try {
-      final response = await dio.post('/login', data: {
-        'email': email,
-        'password': password,
+  // --- HELPER PARA LIMPIAR DATOS DEL BACKEND ---
+  dynamic _processData(dynamic data) {
+    if (data is List) return data.map((e) => _processData(e)).toList();
+    if (data is Map) {
+      final Map<String, dynamic> clean = {};
+      data.forEach((key, value) {
+        // Si el backend manda IDs como Strings, los normalizamos aquí si fuera necesario
+        // Pero por ahora dejamos que el modelo haga el tryParse final por seguridad.
+        clean[key] = value;
       });
-      return response.data;
+      return clean;
+    }
+    return data;
+  }
+
+  Future<dynamic> get(String path) async {
+    try {
+      final response = await dio.get(path);
+      return _processData(response.data);
     } catch (e) {
       throw _handleError(e);
     }
   }
 
-  Future<List<dynamic>> getConductores() async {
+  Future<dynamic> post(String path, dynamic data) async {
     try {
-      final response = await dio.get('/conductores');
-      return response.data;
+      final response = await dio.post(path, data: data);
+      return _processData(response.data);
     } catch (e) {
       throw _handleError(e);
     }
   }
 
-  Future<List<dynamic>> getVehiculos() async {
+  Future<dynamic> patch(String path, {dynamic data}) async {
     try {
-      final response = await dio.get('/vehiculos');
-      return response.data;
-    } catch (e) {
-      throw _handleError(e);
-    }
-  }
-
-  Future<List<dynamic>> getViajesEnCurso() async {
-    try {
-      final response = await dio.get('/viajes/en-curso');
-      return response.data;
-    } catch (e) {
-      throw _handleError(e);
-    }
-  }
-
-  Future<Map<String, dynamic>> crearViaje(Map<String, dynamic> data) async {
-    try {
-      final response = await dio.post('/viajes', data: data);
-      return response.data;
-    } catch (e) {
-      throw _handleError(e);
-    }
-  }
-
-  Future<void> iniciarViaje(int viajeId) async {
-    await dio.patch('/viajes/$viajeId/iniciar');
-  }
-
-  Future<void> finalizarViaje(int viajeId, {double? kmFinal}) async {
-    await dio.patch('/viajes/$viajeId/finalizar', data: {'km_final': kmFinal});
-  }
-
-  Future<void> enviarUbicacion(Ubicacion ubicacion) async {
-    await dio.post('/ubicaciones', data: ubicacion.toJson());
-  }
-
-  Future<List<dynamic>> getAlertasPendientes(int viajeId) async {
-    try {
-      final response = await dio.get('/alertas/viaje/$viajeId/pendientes');
-      return response.data;
+      final response = await dio.patch(path, data: data);
+      return _processData(response.data);
     } catch (e) {
       throw _handleError(e);
     }
@@ -101,11 +78,16 @@ class ApiService {
   String _handleError(dynamic error) {
     if (error is DioException) {
       if (error.response != null) {
-        return 'Error ${error.response?.statusCode}: ${error.response?.data['message'] ?? error.response?.statusMessage}';
-      } else {
-        return 'Error de conexión: ${error.message}';
+        final msg = error.response?.data['error'] ?? error.response?.data['mensaje'];
+        return 'Error ${error.response?.statusCode}: ${msg ?? error.response?.statusMessage}';
       }
+      return 'Error de conexión: ${error.message}';
     }
     return 'Error inesperado';
+  }
+
+  // --- HELPERS DE CONVENIENCIA ---
+  Future<void> enviarUbicacion(dynamic ubicacion) async {
+    await post('/ubicaciones', ubicacion is Map ? ubicacion : ubicacion.toJson());
   }
 }

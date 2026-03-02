@@ -11,14 +11,15 @@ export class UsuarioRepositorio implements IUsuarioRepositorio {
             row.id.toString(),
             row.nombre,
             row.email,
-            row.contraseña
+            row.contraseña,
+            row.rol // Agregamos el rol de la BD
         );
     }
 
     // ─── Buscar usuario por email (usado en Login) ────────────────────────────
     async obtenerPorEmail(email: string): Promise<usuario | null> {
         const [rows]: any = await pool.query(
-            'SELECT id, nombre, email, contraseña FROM usuarios WHERE email = ?',
+            'SELECT id, nombre, email, contraseña, rol FROM usuarios WHERE email = ?',
             [email]
         );
         if (rows.length === 0) return null;
@@ -28,8 +29,8 @@ export class UsuarioRepositorio implements IUsuarioRepositorio {
     // ─── Registrar nuevo usuario ──────────────────────────────────────────────
     async guardar(user: usuario): Promise<void> {
         await pool.query(
-            'INSERT INTO usuarios (nombre, email, contraseña) VALUES (?, ?, ?)',
-            [user.getNombre(), user.getEmail(), user.getContraseña()]
+            'INSERT INTO usuarios (nombre, email, contraseña, rol) VALUES (?, ?, ?, ?)',
+            [user.getNombre(), user.getEmail(), user.getContraseña(), user.getRol()]
         );
     }
 }

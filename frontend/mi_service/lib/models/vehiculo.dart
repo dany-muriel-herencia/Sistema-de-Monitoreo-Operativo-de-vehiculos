@@ -21,14 +21,14 @@ class Vehiculo {
 
   factory Vehiculo.fromJson(Map<String, dynamic> json) {
     return Vehiculo(
-      id: json['id'] ?? 0,
+      id: int.tryParse(json['id'].toString()) ?? 0,
       placa: json['placa'] ?? '',
       marca: json['marca'] ?? '',
       modelo: json['modelo'] ?? '',
-      anio: json['año'] ?? json['anio'] ?? json['idAnio'] ?? 0,
-      capacidad: json['capacidad'] ?? 0,
-      kilometraje: (json['kilometraje'] ?? json['km'] ?? 0).toDouble(),
-      estado: json['estado'] ?? 'DESCONOCIDO',
+      anio: int.tryParse((json['año'] ?? json['anio'] ?? json['idAnio'] ?? 0).toString()) ?? 0,
+      capacidad: int.tryParse((json['capacidad'] ?? 0).toString()) ?? 0,
+      kilometraje: double.tryParse((json['kilometraje'] ?? json['km'] ?? 0).toString()) ?? 0.0,
+      estado: (json['estado'] ?? 'DESCONOCIDO').toString(),
     );
   }
 }

@@ -21,7 +21,9 @@ app.use(express.json());
 // Rutas
 app.use("/api", apiRoutes);
 
-app.get("/", (req, res) => {
+import { Request, Response } from 'express';
+
+app.get("/", (req: Request, res: Response) => {
     res.send("🚀 Servidor de Monitoreo de Flotas corriendo correctamente.");
 });
 

@@ -2,11 +2,11 @@
 import { TipoAlerta } from "../emuns/TipoAlerta";
 
 export class AlertaRuta {
-    private id: string;
-    private tipo: TipoAlerta;
-    private descripcion: string;
-    private timestamp: Date;
-    private resuelto: boolean;
+    public id: string;
+    public tipo: TipoAlerta;
+    public descripcion: string;
+    public timestamp: Date;
+    public resuelto: boolean;
     constructor(id: string, tipo: TipoAlerta, descripcion: string, timestamp: Date, resuelto: boolean) {
         this.id = id;
         this.tipo = tipo;

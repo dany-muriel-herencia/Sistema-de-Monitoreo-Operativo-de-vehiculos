@@ -3,15 +3,15 @@ import { EstadoVehiculo } from "../emuns/EstadoVehiculo";
 
 export class Vehiculo {
     constructor(
-        private id: number | null, // INT AUTO_INCREMENT en BD
-        private marca: string,
-        private placa: string,
-        private modelo: string,
-        private capacidad: number,
-        private kilometraje: number,
-        private estado: EstadoVehiculo,
-        private año: number
-    ) {}
+        public id: number | null, // INT AUTO_INCREMENT en BD
+        public marca: string,
+        public placa: string,
+        public modelo: string,
+        public capacidad: number,
+        public kilometraje: number,
+        public estado: EstadoVehiculo,
+        public año: number
+    ) { }
 
     // --- MÉTODOS DE ACCESO (Getters) ---
     public getId() { return this.id; }
@@ -24,7 +24,7 @@ export class Vehiculo {
     public getAño() { return this.año; }
 
     // --- MÉTODOS DE LÓGICA DE NEGOCIO (Comportamiento) ---
-    
+
     // Verifica si el vehículo puede iniciar un nuevo viaje
     public estaDisponibleParaViaje(): boolean {
         return this.estado === EstadoVehiculo.DISPONIBLE;

@@ -1,48 +1,69 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/admin_provider.dart';
 
-class MapaVehiculos extends ConsumerStatefulWidget {
+class MapaVehiculos extends ConsumerWidget {
   @override
-  _MapaVehiculosState createState() => _MapaVehiculosState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final adminState = ref.watch(adminProvider);
+    final vehiculos = adminState.vehiculos;
 
-class _MapaVehiculosState extends ConsumerState<MapaVehiculos> {
-  GoogleMapController? _mapController;
-  final Set<Marker> _markers = {};
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Text(
+            'Estado de Vehículos (${vehiculos.length})',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
+        ),
+        Expanded(
+          child: vehiculos.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.directions_car_outlined, size: 64, color: Colors.grey.shade400),
+                      const SizedBox(height: 12),
+                      const Text('Sin vehículos registrados', style: TextStyle(color: Colors.grey)),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  itemCount: vehiculos.length,
+                  itemBuilder: (context, index) {
+                    final v = vehiculos[index];
+                    final color = v.estado == 'EN_RUTA'
+                        ? Colors.green
+                        : v.estado == 'EN_MANTENIMIENTO'
+                            ? Colors.orange
+                            : Colors.blue;
 
-  @override
-  void didUpdateWidget(covariant MapaVehiculos oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    _actualizarMarcadores(ref.read(adminProvider));
-  }
-
-  void _actualizarMarcadores(AdminState state) {
-    _markers.clear();
-    // Aquí deberías tener las últimas ubicaciones de cada vehículo.
-    // Por ahora, simulamos algunos puntos fijos.
-    _markers.add(
-      Marker(
-        markerId: MarkerId('vehiculo1'),
-        position: LatLng(40.416775, -3.703790),
-        infoWindow: InfoWindow(title: 'Vehículo ABC-123'),
-      ),
-    );
-    setState(() {});
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GoogleMap(
-      initialCameraPosition: CameraPosition(
-        target: LatLng(40.416775, -3.703790),
-        zoom: 12,
-      ),
-      markers: _markers,
-      onMapCreated: (controller) {
-        _mapController = controller;
-      },
+                    return Card(
+                      margin: const EdgeInsets.symmetric(vertical: 6),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: color.withOpacity(0.15),
+                          child: Icon(Icons.directions_car, color: color),
+                        ),
+                        title: Text('${v.marca} ${v.modelo}',
+                            style: const TextStyle(fontWeight: FontWeight.w600)),
+                        subtitle: Text('Placa: ${v.placa} · ${v.anio}'),
+                        trailing: Chip(
+                          label: Text(v.estado,
+                              style: TextStyle(color: color, fontSize: 11)),
+                          backgroundColor: color.withOpacity(0.1),
+                          side: BorderSide(color: color.withOpacity(0.3)),
+                          padding: EdgeInsets.zero,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ],
     );
   }
 }

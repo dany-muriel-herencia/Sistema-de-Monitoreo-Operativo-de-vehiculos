@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/viaje.dart';
-import '../models/ubicacion.dart';
 import '../services/api_service.dart';
 import 'auth_provider.dart';
 
@@ -42,16 +41,18 @@ class ViajeNotifier extends StateNotifier<ViajeState> {
 
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final viajesJson = await _api.getViajesEnCurso();
+      final List<dynamic> viajesJson = await _api.get('/viajes/en-curso');
 
-      // Buscamos el viaje que pertenezca a este conductor (probando todas las variantes de la clave)
-      final miViajeData = viajesJson.firstWhere(
-        (v) => (v['conductor_id'] == _conductorId || 
-                v['idConductor'] == _conductorId || 
-                v['conductorId'] == _conductorId ||
-                v['usuario_id'] == _conductorId),
-        orElse: () => null,
-      );
+      // Buscamos el viaje que pertenezca a este conductor (normalizando a String para comparar)
+      dynamic miViajeData;
+      for (final v in viajesJson) {
+        final vid = (v['conductor_id'] ?? v['idConductor'] ?? v['conductorId'] ?? v['usuario_id'])
+            ?.toString();
+        if (vid == _conductorId.toString()) {
+          miViajeData = v;
+          break;
+        }
+      }
 
       if (miViajeData != null) {
         state = state.copyWith(viajeActual: Viaje.fromJson(miViajeData));
@@ -67,7 +68,7 @@ class ViajeNotifier extends StateNotifier<ViajeState> {
 
   Future<void> iniciarViaje(int viajeId) async {
     try {
-      await _api.iniciarViaje(viajeId);
+      await _api.patch('/viajes/$viajeId/iniciar');
       state = state.copyWith(
         viajeActual: state.viajeActual?.copyWith(estado: 'EN_CURSO'),
       );
@@ -78,7 +79,7 @@ class ViajeNotifier extends StateNotifier<ViajeState> {
 
   Future<void> finalizarViaje(int viajeId, {double? kmFinal}) async {
     try {
-      await _api.finalizarViaje(viajeId, kmFinal: kmFinal);
+      await _api.patch('/viajes/$viajeId/finalizar', data: {'km_final': kmFinal});
       state = state.copyWith(viajeActual: null);
     } catch (e) {
       state = state.copyWith(error: e.toString());

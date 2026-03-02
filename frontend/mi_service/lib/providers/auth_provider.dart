@@ -47,15 +47,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<bool> login(String email, String password) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final data = await _api.login(email, password);
+      final data = await _api.post('/login', {
+        'email': email,
+        'password': password,
+      });
       
-      // Ajuste según la estructura real de tu API
-      final user = User(
-        id: data['id'] ?? 0,
-        nombre: data['nombre'] ?? '',
-        email: data['email'] ?? email,
-        rol: data['rol'] ?? 'conductor',
-      );
+      final usuarioData = data['usuario'] ?? {};
+      final user = User.fromJson(usuarioData);
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('user', jsonEncode(user.toJson()));

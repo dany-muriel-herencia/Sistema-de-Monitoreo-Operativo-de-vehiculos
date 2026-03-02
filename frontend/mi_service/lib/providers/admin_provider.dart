@@ -53,31 +53,34 @@ class AdminNotifier extends StateNotifier<AdminState> {
       // 1. Cargar Vehículos
       List<Vehiculo> vehiculos = [];
       try {
-        final vehiculosJson = await _api.getVehiculos();
+        final List<dynamic> vehiculosJson = await _api.get('/vehiculos');
         vehiculos = vehiculosJson.map((v) => Vehiculo.fromJson(v)).toList();
       } catch (e) {
         print('Error cargando vehículos: $e');
       }
-
+ 
       // 2. Cargar Conductores
       List<Conductor> conductores = [];
       try {
-        final conductoresJson = await _api.getConductores();
+        final List<dynamic> conductoresJson = await _api.get('/conductores');
         conductores = conductoresJson.map((c) => Conductor.fromJson(c)).toList();
       } catch (e) {
         print('Error cargando conductores: $e');
       }
-
+ 
       // 3. Cargar Alertas (iterando viajes activos)
       List<Alerta> alertas = [];
       try {
-        final viajesEnCurso = await _api.getViajesEnCurso();
+        final List<dynamic> viajesEnCurso = await _api.get('/viajes/en-curso');
         for (var viaje in viajesEnCurso) {
           try {
-            final alertasJson = await _api.getAlertasPendientes(viaje['id']);
-            alertas.addAll(alertasJson.map((a) => Alerta.fromJson(a)));
+            final viajeId = int.tryParse(viaje['id'].toString()) ?? 0;
+            if (viajeId > 0) {
+              final List<dynamic> alertasJson = await _api.get('/alertas/viaje/$viajeId/pendientes');
+              alertas.addAll(alertasJson.map((a) => Alerta.fromJson(a)));
+            }
           } catch (e) {
-            print('Error cargando alertas para viaje ${viaje['id']}: $e');
+            print('Error cargando alertas para viaje: $e');
           }
         }
       } catch (e) {

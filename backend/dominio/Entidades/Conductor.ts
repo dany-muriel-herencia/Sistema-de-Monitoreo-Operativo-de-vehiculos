@@ -8,21 +8,21 @@ import { AlertaRuta } from "./AlertaRuta";
 
 
 export class Conductor extends usuario {
-    private licencia: string;
-    private telefono: number;
-    private edad: number;
-    private sueldo: number;
-    private disponible: boolean;   
+    public licencia: string;
+    public telefono: number;
+    public edad: number;
+    public sueldo: number;
+    public disponible: boolean;
 
     constructor(
-            id: string,
+        id: string,
         nombre: string,
-            email: string,
+        email: string,
         contraseña: string,
-            licencia: string,
+        licencia: string,
         telefono: number,
-            sueldo: number,
-            edad: number,
+        sueldo: number,
+        edad: number,
         disponible: boolean = true
     ) {
         super(id, nombre, email, contraseña);
@@ -37,14 +37,14 @@ export class Conductor extends usuario {
         if (!this.disponible) {
             throw new Error(`Conductor ${this.getId()} no está disponible`);
         }
-        this.disponible = false;   
-        viaje.iniciar();           
+        this.disponible = false;
+        viaje.iniciar();
     }
 
 
     finalizarviaje(viaje: Viaje): void {
-        viaje.finalizar();         
-        this.disponible = true;    
+        viaje.finalizar();
+        this.disponible = true;
     }
 
 

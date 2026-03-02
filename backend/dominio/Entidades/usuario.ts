@@ -1,18 +1,22 @@
 export class usuario {
-    private id: string;
-    private nombre: string;
-    private email: string;
-    private contraseña: string;
+    public id: string;
+    public nombre: string;
+    public email: string;
+    public contraseña: string;
+    public rol: string;
 
-    constructor(id: string, nombre: string, email: string, contraseña: string) {
+    constructor(id: string, nombre: string, email: string, contraseña: string, rol: string = 'conductor') {
         this.id = id;
         this.nombre = nombre;
         this.email = email;
         this.contraseña = contraseña;
+        this.rol = rol;
     }
 
     login(email: string, contrasena: string): boolean {
-        return this.email === email && this.contraseña === contrasena;
+        // Normalizamos el email para evitar errores por mayúsculas o espacios
+        return this.email.toLowerCase().trim() === email.toLowerCase().trim() &&
+            this.contraseña === contrasena;
     }
 
     recuperarContraseña(email: string, nuevaContrasena: string): void {
@@ -22,10 +26,10 @@ export class usuario {
         this.contraseña = nuevaContrasena;
     }
 
-
     getId(): string { return this.id; }
     getNombre(): string { return this.nombre; }
     getEmail(): string { return this.email; }
     getContraseña(): string { return this.contraseña; }
+    getRol(): string { return this.rol; }
 }
 
