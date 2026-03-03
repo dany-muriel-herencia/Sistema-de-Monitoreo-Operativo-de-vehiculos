@@ -35,7 +35,7 @@ class _DriverMapaScreenState extends State<DriverMapaScreen> {
   bool _isSearching = false;
   final _searchController = TextEditingController();
 
-  static const LatLng _defaultCenter = LatLng(-12.046374, -77.042793);
+  static const LatLng _defaultCenter = LatLng(-18.0146, -70.2536); // Tacna, Perú
 
   @override
   void initState() {

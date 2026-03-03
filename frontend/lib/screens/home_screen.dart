@@ -14,6 +14,8 @@ import '../screens/admin/monitoreo_mapa_screen.dart';
 import '../screens/admin/crear_ruta_mapa_screen.dart';
 import '../models/ruta.dart';
 import '../services/ruta_service.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -106,13 +108,10 @@ class _HomeScreenState extends State<HomeScreen>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Icon(Icons.menu, color: Colors.white),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.notifications_none, color: Colors.white),
+                  IconButton(
+                    icon: const Icon(Icons.logout, color: Colors.white),
+                    tooltip: 'Cerrar sesión',
+                    onPressed: () => Navigator.of(context).pushReplacementNamed('/'),
                   ),
                 ],
               ),
@@ -415,51 +414,122 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           );
 
-        return ListView.builder(
-          itemCount: items.length,
-          itemBuilder: (context, index) {
-            final item = items[index];
-            return _buildPanel(
-              child: ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: Colors.blue.shade100,
-                  child: Icon(Icons.route, color: Colors.blue.shade700),
-                ),
-                title: Text(
-                  item.nombre,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                subtitle: Text(
-                  '${item.distanciaTotal.toStringAsFixed(1)} km  •  ${item.duracionEstimadaMinutos} min  •  ${item.puntos.length} puntos',
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
+        return Column(
+          children: [
+            // Mapa con todas las rutas
+            Container(
+              height: 250,
+              margin: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10)],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: FlutterMap(
+                  options: MapOptions(
+                    initialCenter: items.isNotEmpty && items[0].puntos.isNotEmpty
+                        ? LatLng(items[0].puntos[0].latitud, items[0].puntos[0].longitud)
+                        : const LatLng(-18.0146, -70.2536), // Tacna, Perú
+                    initialZoom: 12.0,
+                  ),
                   children: [
-                    // Ver ruta en el mapa
-                    IconButton(
-                      icon: const Icon(Icons.map, color: Colors.blue),
-                      tooltip: 'Ver en mapa',
-                      onPressed: () async {
-                        final result = await Navigator.push<bool>(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                CrearRutaMapaScreen(rutaExistente: item),
+                    TileLayer(
+                      urlTemplate: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
+                      subdomains: const ['a', 'b', 'c'],
+                    ),
+                    // Dibujar TODAS las polilíneas de las rutas
+                    PolylineLayer(
+                      polylines: items.map((ruta) {
+                        return Polyline(
+                          points: ruta.puntos.map((p) => LatLng(p.latitud, p.longitud)).toList(),
+                          color: _generateColor(ruta.id),
+                          strokeWidth: 4.0,
+                        );
+                      }).toList(),
+                    ),
+                    // Marcadores de DESTINO de cada ruta
+                    MarkerLayer(
+                      markers: items.where((r) => r.puntos.isNotEmpty).map((ruta) {
+                        final destination = ruta.puntos.last;
+                        return Marker(
+                          point: LatLng(destination.latitud, destination.longitud),
+                          width: 80,
+                          height: 80,
+                          child: Column(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: _generateColor(ruta.id),
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(color: Colors.white, width: 1),
+                                ),
+                                child: Text(
+                                  ruta.nombre,
+                                  style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              Icon(Icons.flag, color: _generateColor(ruta.id), size: 24),
+                            ],
                           ),
                         );
-                        if (result == true) _refreshAll();
-                      },
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                      tooltip: 'Eliminar',
-                      onPressed: () => _confirmDeleteRuta(item),
+                      }).toList(),
                     ),
                   ],
                 ),
               ),
-            );
-          },
+            ),
+            
+            // Lista de rutas debajo
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                itemCount: items.length,
+                itemBuilder: (context, index) {
+                  final item = items[index];
+                  final routeColor = _generateColor(item.id);
+                  return _buildPanel(
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: routeColor.withOpacity(0.1),
+                        child: Icon(Icons.route, color: routeColor),
+                      ),
+                      title: Text(
+                        item.nombre,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: Text(
+                        '${item.distanciaTotal.toStringAsFixed(1)} km  •  ${item.duracionEstimadaMinutos} min',
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit, color: Colors.blue),
+                            onPressed: () async {
+                              final result = await Navigator.push<bool>(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => CrearRutaMapaScreen(rutaExistente: item),
+                                ),
+                              );
+                              if (result == true) _refreshAll();
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () => _confirmDeleteRuta(item),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         );
       },
     );
@@ -811,6 +881,26 @@ class _HomeScreenState extends State<HomeScreen>
         ),
       ),
     );
+  }
+
+  Color _generateColor(String id) {
+    final List<Color> colors = [
+      Colors.blue,
+      Colors.red,
+      Colors.green,
+      Colors.orange,
+      Colors.purple,
+      Colors.teal,
+      Colors.indigo,
+      Colors.pink,
+      Colors.cyan,
+      Colors.amber,
+    ];
+    int hash = 0;
+    for (int i = 0; i < id.length; i++) {
+      hash = id.codeUnitAt(i) + ((hash << 5) - hash);
+    }
+    return colors[hash.abs() % colors.length];
   }
 
   Widget _buildError(String error) {

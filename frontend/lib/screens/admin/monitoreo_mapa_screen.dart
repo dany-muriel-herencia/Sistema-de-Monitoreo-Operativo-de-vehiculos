@@ -152,7 +152,7 @@ class _MonitoreoMapaScreenState extends State<MonitoreoMapaScreen> {
                       double.parse(markerData[0]['ultimaUbicacion']['latitud'].toString()),
                       double.parse(markerData[0]['ultimaUbicacion']['longitud'].toString()),
                     )
-                  : const LatLng(-12.046374, -77.042793),
+                  : const LatLng(-18.0146, -70.2536), // Tacna, Perú
               initialZoom: 13.0,
               interactionOptions: const InteractionOptions(
                 flags: InteractiveFlag.all,

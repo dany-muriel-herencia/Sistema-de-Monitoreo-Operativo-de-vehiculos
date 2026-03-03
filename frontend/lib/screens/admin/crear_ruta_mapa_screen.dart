@@ -27,7 +27,7 @@ class _CrearRutaMapaScreenState extends State<CrearRutaMapaScreen> {
   final _searchController = TextEditingController();
 
   // Perú como centro por defecto
-  static const LatLng _defaultCenter = LatLng(-12.046374, -77.042793);
+  static const LatLng _defaultCenter = LatLng(-18.0146, -70.2536); // Tacna, Perú
 
   @override
   void initState() {
@@ -166,7 +166,7 @@ class _CrearRutaMapaScreenState extends State<CrearRutaMapaScreen> {
           widget.rutaExistente != null ? 'Editar Ruta en Mapa' : 'Crear Ruta en Mapa',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.blue.shade900,
+        backgroundColor: const Color(0xFF8E24ED),
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -208,8 +208,10 @@ class _CrearRutaMapaScreenState extends State<CrearRutaMapaScreen> {
                   polylines: [
                     Polyline(
                       points: _puntos,
-                      color: Colors.blue.shade700,
-                      strokeWidth: 4.0,
+                       color: const Color(0xFF8E24ED),
+                       strokeWidth: 5.0,
+                       borderColor: Colors.white,
+                       borderStrokeWidth: 1.0,
                     ),
                   ],
                 ),
@@ -230,6 +232,7 @@ class _CrearRutaMapaScreenState extends State<CrearRutaMapaScreen> {
                     width: 44,
                     height: 44,
                     child: GestureDetector(
+                      onTap: () => _removePoint(i), // Ahora con un simple toque se puede quitar
                       onLongPress: () => _removePoint(i),
                       child: Container(
                         decoration: BoxDecoration(
@@ -237,22 +240,37 @@ class _CrearRutaMapaScreenState extends State<CrearRutaMapaScreen> {
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 3),
                           boxShadow: const [
-                            BoxShadow(color: Colors.black38, blurRadius: 4)
+                            BoxShadow(color: Colors.black38, blurRadius: 6, offset: Offset(0, 3))
                           ],
                         ),
-                        child: Center(
-                          child: isFirst
-                              ? const Icon(Icons.flag, color: Colors.white, size: 20)
-                              : isLast
-                                  ? const Icon(Icons.sports_score, color: Colors.white, size: 20)
-                                  : Text(
-                                      '${i + 1}',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Center(
+                              child: isFirst
+                                  ? const Icon(Icons.play_arrow, color: Colors.white, size: 20)
+                                  : isLast
+                                      ? const Icon(Icons.flag, color: Colors.white, size: 20)
+                                      : Text(
+                                          '${i + 1}',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                            ),
+                            // Icono pequeño de eliminar al hacer hover o siempre visible para claridad
+                            Positioned(
+                              top: -2,
+                              right: -2,
+                              child: Container(
+                                padding: const EdgeInsets.all(2),
+                                decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                                child: const Icon(Icons.close, color: Colors.white, size: 10),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -341,14 +359,26 @@ class _CrearRutaMapaScreenState extends State<CrearRutaMapaScreen> {
                   heroTag: 'zoom_in',
                   backgroundColor: Colors.white,
                   onPressed: () => _mapController.move(_mapController.camera.center, _mapController.camera.zoom + 1),
-                  child: const Icon(Icons.add, color: Colors.blue),
+                  child: const Icon(Icons.add, color: Color(0xFF8E24ED)),
                 ),
                 const SizedBox(height: 8),
                 FloatingActionButton.small(
                   heroTag: 'zoom_out',
                   backgroundColor: Colors.white,
                   onPressed: () => _mapController.move(_mapController.camera.center, _mapController.camera.zoom - 1),
-                  child: const Icon(Icons.remove, color: Colors.blue),
+                  child: const Icon(Icons.remove, color: Color(0xFF8E24ED)),
+                ),
+                const SizedBox(height: 16),
+                // Botón DESHACER (Quitar último punto)
+                FloatingActionButton(
+                  heroTag: 'undo_btn',
+                  mini: true,
+                  backgroundColor: Colors.orange,
+                  onPressed: _puntos.isEmpty ? null : () {
+                    setState(() => _puntos.removeLast());
+                  },
+                  tooltip: 'Deshacer (Quitar último punto)',
+                  child: const Icon(Icons.undo, color: Colors.white),
                 ),
               ],
             ),
@@ -374,7 +404,7 @@ class _CrearRutaMapaScreenState extends State<CrearRutaMapaScreen> {
                       const SizedBox(height: 4),
                       _legendItem(Colors.red, 'Fin'),
                       const SizedBox(height: 4),
-                      const Text('Mantén presionado\npara eliminar',
+                       const Text('Toca un punto\npara eliminarlo',
                           style: TextStyle(fontSize: 10, color: Colors.grey)),
                     ],
                   ),
@@ -389,7 +419,7 @@ class _CrearRutaMapaScreenState extends State<CrearRutaMapaScreen> {
               left: 24,
               right: 24,
               child: Card(
-                color: Colors.blue.shade900.withOpacity(0.9),
+                color: const Color(0xFF8E24ED).withOpacity(0.95),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 child: const Padding(
                   padding: EdgeInsets.all(16),
@@ -399,7 +429,7 @@ class _CrearRutaMapaScreenState extends State<CrearRutaMapaScreen> {
                       SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Toca el mapa para agregar puntos de la ruta.\nMantén presionado un punto para eliminarlo.',
+                          'Toca el mapa para agregar puntos.\nToca un marcador o usa "Deshacer" para quitar puntos.',
                           style: TextStyle(color: Colors.white, fontSize: 13),
                         ),
                       ),

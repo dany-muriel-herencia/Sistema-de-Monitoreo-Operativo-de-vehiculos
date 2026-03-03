@@ -95,19 +95,60 @@ export class RutaRepositorio implements IRutaRepositorio {
 
     // ─── Actualizar nombre o distancia de la ruta ─────────────────────────────
     async actualizar(ruta: Ruta): Promise<void> {
-        await pool.query(
-            `UPDATE rutas SET nombre = ?, distancia_total = ?, duracion_estimada = ? WHERE id = ?`,
-            [
-                ruta.getNombre(),
-                ruta.getDistanciaTotal(),
-                ruta.getDuracionEstimada().enMinutos(),
-                ruta.getId()
-            ]
-        );
+        const connection = await pool.getConnection();
+        try {
+            await connection.beginTransaction();
+
+            // 1. Actualizar datos básicos
+            await connection.query(
+                `UPDATE rutas SET nombre = ?, distancia_total = ?, duracion_estimada = ? WHERE id = ?`,
+                [
+                    ruta.getNombre(),
+                    ruta.getDistanciaTotal(),
+                    ruta.getDuracionEstimada().enMinutos(),
+                    ruta.getId()
+                ]
+            );
+
+            // 2. Limpiar puntos anteriores
+            await connection.query(`DELETE FROM puntos_ruta WHERE ruta_id = ?`, [ruta.getId()]);
+
+            // 3. Insertar nuevos puntos
+            for (const punto of ruta.getPuntos()) {
+                await connection.query(
+                    `INSERT INTO puntos_ruta (ruta_id, orden, latitud, longitud) VALUES (?, ?, ?, ?)`,
+                    [ruta.getId(), punto.getOrden(), punto.getLatitud(), punto.getLongitud()]
+                );
+            }
+
+            await connection.commit();
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
+        }
     }
 
     // ─── Eliminar ruta (puntos se eliminan en cascada por FK) ─────────────────
     async eliminar(id: string): Promise<void> {
-        await pool.query('DELETE FROM rutas WHERE id = ?', [id]);
+        const connection = await pool.getConnection();
+        try {
+            await connection.beginTransaction();
+
+            // 1. Primero eliminamos los viajes asociados a esta ruta
+            // (Note: ubicaciones y eventos de esos viajes se borran en cascada por la BD)
+            await connection.query('DELETE FROM viajes WHERE ruta_id = ?', [id]);
+
+            // 2. Ahora eliminamos la ruta (sus puntos se borran en cascada por la BD)
+            await connection.query('DELETE FROM rutas WHERE id = ?', [id]);
+
+            await connection.commit();
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
+        }
     }
 }
