@@ -23,6 +23,7 @@ class _MonitoreoMapaScreenState extends State<MonitoreoMapaScreen> {
   bool _siguiendoUbicacion = false;
   bool _isSearching = false;
   final _searchController = TextEditingController();
+  Map<String, dynamic>? _selectedVehicle;
   List<dynamic> _liveData = [];
   Timer? _refreshTimer;
   DateTime? _lastUpdate;
@@ -173,6 +174,82 @@ class _MonitoreoMapaScreenState extends State<MonitoreoMapaScreen> {
                 subdomains: const ['a', 'b', 'c'],
                 userAgentPackageName: 'com.flota.monitoreo',
               ),
+
+              // Dibujar TODAS las rutas de los vehículos activos con colores distintos
+              ...markerData.map((m) {
+                if (m['ruta'] == null || (m['ruta']['puntos'] as List).isEmpty) return const SizedBox.shrink();
+                
+                final String viajeId = m['idViaje'].toString();
+                final Color routeColor = _generateColor(viajeId);
+                final bool isSelected = _selectedVehicle != null && _selectedVehicle!['idViaje'] == m['idViaje'];
+
+                return PolylineLayer(
+                  polylines: [
+                    Polyline(
+                      points: (m['ruta']['puntos'] as List).map((p) => 
+                        LatLng(double.parse(p['latitud'].toString()), double.parse(p['longitud'].toString()))
+                      ).toList(),
+                      color: isSelected ? routeColor : routeColor.withOpacity(0.4),
+                      strokeWidth: isSelected ? 5 : 3,
+                    ),
+                  ],
+                );
+              }),
+
+              // Dibujar los marcadores de las paradas SOLO si hay uno seleccionado (para no saturar)
+              if (_selectedVehicle != null && _selectedVehicle!['ruta'] != null)
+                MarkerLayer(
+                  markers: (_selectedVehicle!['ruta']['puntos'] as List).map((p) {
+                    final isFirst = p['orden'] == 1;
+                    final isLast = p['orden'] == (_selectedVehicle!['ruta']['puntos'] as List).length;
+                    
+                    if (!isFirst && !isLast) {
+                      return Marker(
+                        point: LatLng(double.parse(p['latitud'].toString()), double.parse(p['longitud'].toString())),
+                        width: 20,
+                        height: 20,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withOpacity(0.8),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 1.5),
+                          ),
+                          child: Center(
+                            child: Text(
+                              '${p['orden']}',
+                              style: const TextStyle(color: Colors.white, fontSize: 7, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+
+                    return Marker(
+                      point: LatLng(double.parse(p['latitud'].toString()), double.parse(p['longitud'].toString())),
+                      width: 40,
+                      height: 40,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Icon(
+                            Icons.location_on,
+                            color: isFirst ? Colors.green : Colors.red,
+                            size: 40,
+                          ),
+                          Positioned(
+                            top: 5,
+                            child: Icon(
+                              isFirst ? Icons.home : Icons.flag,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+
               MarkerLayer(
                 markers: markerData.map((m) {
                   final lat = double.parse(m['ultimaUbicacion']['latitud'].toString());
@@ -189,23 +266,26 @@ class _MonitoreoMapaScreenState extends State<MonitoreoMapaScreen> {
                     width: 100,
                     height: 100,
                     child: GestureDetector(
-                      onTap: () => _showVehicleDetails(context, m),
+                      onTap: () {
+                        setState(() => _selectedVehicle = m);
+                        _showVehicleDetails(context, m);
+                      },
                       child: Column(
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: _generateColor(m['idViaje'].toString()),
                               borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: markerColor, width: 2),
+                              border: Border.all(color: Colors.white, width: 2),
                               boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
                             ),
                             child: Text(
                               '$placa • ${(velocidad as num).toStringAsFixed(0)} km/h',
-                              style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
+                              style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white),
                             ),
                           ),
-                          Icon(Icons.local_shipping, color: markerColor, size: 36),
+                          Icon(Icons.local_shipping, color: _generateColor(m['idViaje'].toString()), size: 36),
                         ],
                       ),
                     ),
@@ -361,6 +441,26 @@ class _MonitoreoMapaScreenState extends State<MonitoreoMapaScreen> {
     );
   }
 
+  Color _generateColor(String id) {
+    final List<Color> colors = [
+      Colors.blue,
+      Colors.red,
+      Colors.green,
+      Colors.orange,
+      Colors.purple,
+      Colors.teal,
+      Colors.indigo,
+      Colors.pink,
+      Colors.cyan,
+      Colors.amber,
+    ];
+    int hash = 0;
+    for (int i = 0; i < id.length; i++) {
+      hash = id.codeUnitAt(i) + ((hash << 5) - hash);
+    }
+    return colors[hash.abs() % colors.length];
+  }
+
   void _showVehicleDetails(BuildContext context, dynamic data) {
     final lat = data['ultimaUbicacion']['latitud'];
     final lng = data['ultimaUbicacion']['longitud'];
@@ -395,7 +495,7 @@ class _MonitoreoMapaScreenState extends State<MonitoreoMapaScreen> {
               ),
               const Divider(height: 32),
               _buildInfoRow(Icons.person, 'Conductor', data['conductor'] ?? 'Sin asignar'),
-              _buildInfoRow(Icons.route, 'Ruta', data['ruta'] ?? 'Sin ruta'),
+              _buildInfoRow(Icons.route, 'Ruta', data['ruta'] != null ? data['ruta']['nombre'] : 'Sin ruta'),
               _buildInfoRow(Icons.near_me, 'Siguiente Parada', data['proximaParada'] ?? 'Llegando...'),
               _buildInfoRow(Icons.speed, 'Velocidad', '${(velocidad as num).toStringAsFixed(1)} km/h'),
               _buildInfoRow(Icons.location_on, 'Coordenadas', '$lat, $lng'),

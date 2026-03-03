@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
@@ -30,6 +32,8 @@ class _DriverMapaScreenState extends State<DriverMapaScreen> {
   bool _siguiendoUbicacion = true;
   bool _isSatellite = false;
   bool _permisoOk = false;
+  bool _isSearching = false;
+  final _searchController = TextEditingController();
 
   static const LatLng _defaultCenter = LatLng(-12.046374, -77.042793);
 
@@ -42,7 +46,63 @@ class _DriverMapaScreenState extends State<DriverMapaScreen> {
   @override
   void dispose() {
     _posicionSubscription?.cancel();
+    _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _buscarDireccion(String query) async {
+    if (query.isEmpty) return;
+    setState(() => _isSearching = true);
+    try {
+      final url = Uri.parse('https://nominatim.openstreetmap.org/search?q=${Uri.encodeComponent(query)}&format=json&limit=1');
+      final response = await http.get(url, headers: {'User-Agent': 'FlutterFlotaApp/1.0'});
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data is List && data.isNotEmpty) {
+          final lat = double.parse(data[0]['lat']);
+          final lon = double.parse(data[0]['lon']);
+          final point = LatLng(lat, lon);
+          
+          setState(() => _siguiendoUbicacion = false);
+          _mapController.move(point, 16.0);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Ubicación: ${data[0]['display_name']}'), backgroundColor: Colors.green),
+          );
+        }
+      }
+    } catch (_) {} 
+    finally {
+      if (mounted) setState(() => _isSearching = false);
+    }
+  }
+
+  String _obtenerProximaParada() {
+    if (_miUbicacion == null || widget.puntosRuta.isEmpty) return 'Iniciando...';
+
+    int indiceMasCercano = 0;
+    double distMin = double.infinity;
+    const distance = Distance();
+
+    for (int i = 0; i < widget.puntosRuta.length; i++) {
+        final p = widget.puntosRuta[i];
+        final dist = distance.as(LengthUnit.Meter, _miUbicacion!, LatLng(p.latitud, p.longitud));
+        if (dist < distMin) {
+            distMin = dist;
+            indiceMasCercano = i;
+        }
+    }
+
+    // Si estamos en el último punto, ya llegamos
+    if (indiceMasCercano == widget.puntosRuta.length - 1 && distMin < 50) {
+        return '¡Has llegado a tu destino!';
+    }
+
+    // El siguiente punto es el proximo en la lista
+    int nextIdx = indiceMasCercano + 1;
+    if (nextIdx >= widget.puntosRuta.length) return 'Final de Ruta';
+    
+    return 'Dirígete a: Parada ${nextIdx + 1}';
   }
 
   Future<void> _iniciarGPS() async {
@@ -180,29 +240,52 @@ class _DriverMapaScreenState extends State<DriverMapaScreen> {
                     final p = e.value;
                     final isFirst = i == 0;
                     final isLast = i == _puntosLatLng.length - 1;
-                    return Marker(
-                      point: p,
-                      width: 32,
-                      height: 32,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: isFirst
-                              ? Colors.green
-                              : isLast
-                                  ? Colors.red
-                                  : Colors.orange.shade600,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
-                        ),
-                        child: Center(
-                          child: Text(
-                            '${i + 1}',
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold),
+
+                    if (!isFirst && !isLast) {
+                      return Marker(
+                        point: p,
+                        width: 24,
+                        height: 24,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.orange.shade600,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                          child: Center(
+                            child: Text(
+                              '${i + 1}',
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold),
+                            ),
                           ),
                         ),
+                      );
+                    }
+
+                    return Marker(
+                      point: p,
+                      width: 45,
+                      height: 45,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Icon(
+                            Icons.location_on,
+                            color: isFirst ? Colors.green.shade700 : Colors.red.shade700,
+                            size: 45,
+                          ),
+                          Positioned(
+                            top: 6,
+                            child: Icon(
+                              isFirst ? Icons.home : Icons.flag,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                        ],
                       ),
                     );
                   }).toList(),
@@ -252,44 +335,127 @@ class _DriverMapaScreenState extends State<DriverMapaScreen> {
             ],
           ),
 
+          // ── BARRA DE BÚSQUEDA ──────────────────────────────────
+          Positioned(
+            top: 10,
+            left: 10,
+            right: 10,
+            child: Column(
+              children: [
+                Card(
+                  elevation: 6,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: TextField(
+                      controller: _searchController,
+                      style: const TextStyle(fontSize: 14),
+                      decoration: InputDecoration(
+                        hintText: 'Buscar casa, calle o lugar...',
+                        border: InputBorder.none,
+                        icon: const Icon(Icons.search, color: Colors.blue, size: 20),
+                        suffixIcon: _isSearching 
+                          ? const SizedBox(width: 18, height: 18, child: Padding(padding: EdgeInsets.all(12), child: CircularProgressIndicator(strokeWidth: 2)))
+                          : IconButton(
+                              icon: const Icon(Icons.clear, size: 18), 
+                              onPressed: () => _searchController.clear()
+                            ),
+                      ),
+                      onSubmitted: _buscarDireccion,
+                    ),
+                  ),
+                ),
+                if (widget.puntosRuta.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Card(
+                      color: Colors.blue.shade800,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.near_me, color: Colors.white, size: 24),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _obtenerProximaParada(),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15
+                                    ),
+                                  ),
+                                  Text(
+                                    'Ruta: ${widget.nombreRuta}',
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.8),
+                                      fontSize: 12
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: const BoxDecoration(
+                                color: Colors.white24,
+                                shape: BoxShape.circle
+                              ),
+                              child: const Icon(Icons.turn_right, color: Colors.white, size: 20),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+
           // ── PANEL INFERIOR: estado y velocidad ─────────────────
           Positioned(
             bottom: 0,
             left: 0,
             right: 0,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               decoration: BoxDecoration(
                 color: Colors.white,
                 boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 12)],
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _infoTile(
-                    icon: Icons.speed,
-                    label: 'Velocidad',
-                    value: _miUbicacion != null
-                        ? '${_miVelocidad.toStringAsFixed(0)} km/h'
-                        : '-- km/h',
-                    color: _miVelocidad > 80 ? Colors.red : Colors.green,
-                  ),
-                  _infoTile(
-                    icon: Icons.location_on,
-                    label: 'Coordenadas',
-                    value: _miUbicacion != null
-                        ? '${_miUbicacion!.latitude.toStringAsFixed(5)}, ${_miUbicacion!.longitude.toStringAsFixed(5)}'
-                        : 'Buscando GPS...',
-                    color: Colors.blue,
-                  ),
-                  _infoTile(
-                    icon: Icons.gps_fixed,
-                    label: 'GPS',
-                    value: _miUbicacion != null ? 'Activo ✓' : 'Buscando...',
-                    color: _miUbicacion != null ? Colors.green : Colors.orange,
-                  ),
-                ],
+              child: SafeArea(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _infoTile(
+                      icon: Icons.speed,
+                      label: 'Velocidad',
+                      value: _miUbicacion != null
+                          ? '${_miVelocidad.toStringAsFixed(0)} km/h'
+                          : '-- km/h',
+                      color: _miVelocidad > 80 ? Colors.red : Colors.green,
+                    ),
+                    _infoTile(
+                      icon: Icons.location_on,
+                      label: 'Coordenadas',
+                      value: _miUbicacion != null
+                          ? '${_miUbicacion!.latitude.toStringAsFixed(4)}, ${_miUbicacion!.longitude.toStringAsFixed(4)}'
+                          : 'GPS...',
+                      color: Colors.blue,
+                    ),
+                    _infoTile(
+                      icon: Icons.flag,
+                      label: 'Destino',
+                      value: '${widget.puntosRuta.length} paradas',
+                      color: Colors.red,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -297,20 +463,39 @@ class _DriverMapaScreenState extends State<DriverMapaScreen> {
           // ── BOTÓN: Centrar en mi ubicación ─────────────────────
           Positioned(
             right: 16,
-            bottom: 100,
-            child: FloatingActionButton.small(
-              heroTag: 'center_btn',
-              backgroundColor: Colors.white,
-              onPressed: () {
-                if (_miUbicacion != null) {
-                  setState(() => _siguiendoUbicacion = true);
-                  _mapController.move(_miUbicacion!, 16.0);
-                }
-              },
-              child: Icon(
-                _siguiendoUbicacion ? Icons.gps_fixed : Icons.gps_not_fixed,
-                color: Colors.blue.shade700,
-              ),
+            bottom: 120, // Subido un poco para no tapar el panel de abajo
+            child: Column(
+              children: [
+                FloatingActionButton.small(
+                  heroTag: 'zoom_in',
+                  backgroundColor: Colors.white,
+                  onPressed: () => _mapController.move(_mapController.camera.center, _mapController.camera.zoom + 1),
+                  child: const Icon(Icons.add, color: Colors.blue),
+                ),
+                const SizedBox(height: 8),
+                FloatingActionButton.small(
+                  heroTag: 'zoom_out',
+                  backgroundColor: Colors.white,
+                  onPressed: () => _mapController.move(_mapController.camera.center, _mapController.camera.zoom - 1),
+                  child: const Icon(Icons.remove, color: Colors.blue),
+                ),
+                const SizedBox(height: 16),
+                FloatingActionButton(
+                  heroTag: 'center_btn',
+                  mini: true,
+                  backgroundColor: Colors.white,
+                  onPressed: () {
+                    if (_miUbicacion != null) {
+                      setState(() => _siguiendoUbicacion = true);
+                      _mapController.move(_miUbicacion!, 16.0);
+                    }
+                  },
+                  child: Icon(
+                    _siguiendoUbicacion ? Icons.gps_fixed : Icons.gps_not_fixed,
+                    color: Colors.blue.shade700,
+                  ),
+                ),
+              ],
             ),
           ),
 

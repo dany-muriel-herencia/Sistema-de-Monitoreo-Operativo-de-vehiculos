@@ -61,11 +61,15 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
 
       // Cargar la ruta asignada al viaje
       Ruta? ruta;
-      if (found != null) {
+      if (found != null && found.rutaId.isNotEmpty) {
         try {
           final rutas = await _rutaService.obtenerRutas();
-          // El viaje tiene rutaId — buscar coincidencia
-          ruta = rutas.isNotEmpty ? rutas.first : null;
+          // Buscar la ruta que coincida con el idRuta del viaje
+          try {
+            ruta = rutas.firstWhere((r) => r.id == found!.rutaId);
+          } catch (_) {
+            ruta = null;
+          }
         } catch (_) {}
       }
 

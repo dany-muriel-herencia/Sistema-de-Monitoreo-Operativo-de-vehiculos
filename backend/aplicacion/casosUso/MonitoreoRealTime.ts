@@ -37,7 +37,16 @@ export class MonitoreoRealTime {
                 idViaje,
                 conductor: conductor ? conductor.getNombre() : "Desconocido",
                 placa,
-                ruta: ruta ? ruta.getNombre() : "Sin ruta",
+                ruta: ruta ? {
+                    id: ruta.getId(),
+                    nombre: ruta.getNombre(),
+                    puntos: ruta.getPuntos().map(p => ({
+                        latitud: p.getLatitud(),
+                        longitud: p.getLongitud(),
+                        orden: p.getOrden(),
+                        descripcion: p.getDescripcion()
+                    }))
+                } : null,
                 proximaParada: proximaParada || "Llegando a destino / Final",
                 estado: typeof viaje.getEstado === 'function' ? viaje.getEstado() : viaje.estado,
                 ultimaUbicacion: ultimaUbicacion ? {

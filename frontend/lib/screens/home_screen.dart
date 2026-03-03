@@ -101,12 +101,12 @@ class _HomeScreenState extends State<HomeScreen>
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0xFF08343D), Color(0xFF0B5563)],
+                  colors: [Color(0xFF1A5A65), Color(0xFF2E7D89)],
                 ),
               ),
             ),
             Opacity(
-              opacity: 0.20,
+              opacity: 0.32,
               child: Image.network(
                 'https://images.unsplash.com/photo-1556122071-e404cb6f31de?auto=format&fit=crop&w=1400&q=80',
                 fit: BoxFit.cover,
@@ -142,8 +142,8 @@ class _HomeScreenState extends State<HomeScreen>
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFF0E3B43), Color(0xFFF5F8FA)],
-            stops: [0.0, 0.42],
+            colors: [Color(0xFFE6F3F6), Color(0xFFF7FBFD)],
+            stops: [0.0, 0.55],
           ),
         ),
         child: TabBarView(
@@ -208,7 +208,7 @@ class _HomeScreenState extends State<HomeScreen>
     return Container(
       margin: margin ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.92),
+        color: Colors.white.withOpacity(0.97),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFF0B5563).withOpacity(0.10)),
         boxShadow: [
