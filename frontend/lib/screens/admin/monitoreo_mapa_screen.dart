@@ -127,7 +127,7 @@ class _MonitoreoMapaScreenState extends State<MonitoreoMapaScreen> {
             ),
           ],
         ),
-        backgroundColor: Colors.blue.shade900,
+        backgroundColor: const Color(0xFF8E24ED),
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -310,7 +310,7 @@ class _MonitoreoMapaScreenState extends State<MonitoreoMapaScreen> {
                   decoration: InputDecoration(
                     hintText: 'Buscar calle o vivienda...',
                     border: InputBorder.none,
-                    icon: const Icon(Icons.search, color: Colors.blue),
+                    icon: const Icon(Icons.search, color: Color(0xFF8E24ED)),
                     suffixIcon: _isSearching 
                       ? const SizedBox(width: 20, height: 20, child: Padding(padding: EdgeInsets.all(12), child: CircularProgressIndicator(strokeWidth: 2)))
                       : IconButton(
@@ -360,7 +360,7 @@ class _MonitoreoMapaScreenState extends State<MonitoreoMapaScreen> {
                   mini: true,
                   backgroundColor: Colors.white,
                   onPressed: () => _mapController.move(_mapController.camera.center, _mapController.camera.zoom + 1),
-                  child: const Icon(Icons.add, color: Colors.blue),
+                  child: const Icon(Icons.add, color: Color(0xFF8E24ED)),
                 ),
                 const SizedBox(height: 8),
                 FloatingActionButton(
@@ -368,13 +368,13 @@ class _MonitoreoMapaScreenState extends State<MonitoreoMapaScreen> {
                   mini: true,
                   backgroundColor: Colors.white,
                   onPressed: () => _mapController.move(_mapController.camera.center, _mapController.camera.zoom - 1),
-                  child: const Icon(Icons.remove, color: Colors.blue),
+                  child: const Icon(Icons.remove, color: Color(0xFF8E24ED)),
                 ),
                 const SizedBox(height: 16),
                 FloatingActionButton(
                   heroTag: 'follow_btn',
                   mini: true,
-                  backgroundColor: _siguiendoUbicacion ? Colors.blue.shade700 : Colors.white,
+                  backgroundColor: _siguiendoUbicacion ? const Color(0xFF8E24ED) : Colors.white,
                   onPressed: () {
                     setState(() => _siguiendoUbicacion = !_siguiendoUbicacion);
                     if (_siguiendoUbicacion && markerData.isNotEmpty) {
@@ -390,7 +390,7 @@ class _MonitoreoMapaScreenState extends State<MonitoreoMapaScreen> {
                   tooltip: 'Seguimiento Automático',
                   child: Icon(
                     _siguiendoUbicacion ? Icons.gps_fixed : Icons.gps_not_fixed,
-                    color: _siguiendoUbicacion ? Colors.white : Colors.blue,
+                    color: _siguiendoUbicacion ? Colors.white : const Color(0xFF8E24ED),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -410,7 +410,7 @@ class _MonitoreoMapaScreenState extends State<MonitoreoMapaScreen> {
                     }
                   },
                   tooltip: 'Centrar en el primer vehículo',
-                  child: const Icon(Icons.my_location, color: Colors.blue),
+                  child: const Icon(Icons.my_location, color: Color(0xFF8E24ED)),
                 ),
               ],
             ),
@@ -485,12 +485,12 @@ class _MonitoreoMapaScreenState extends State<MonitoreoMapaScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Vehículo: ${data['placa']}', 
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.blue)),
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF8E24ED))),
                       Text('Estado: ${data['estado']}', 
                         style: TextStyle(color: data['estado'] == 'EN_CURSO' ? Colors.green : Colors.grey)),
                     ],
                   ),
-                  const Icon(Icons.local_shipping, size: 40, color: Colors.blue),
+                   const Icon(Icons.local_shipping, size: 40, color: Color(0xFF8E24ED)),
                 ],
               ),
               const Divider(height: 32),
@@ -505,7 +505,7 @@ class _MonitoreoMapaScreenState extends State<MonitoreoMapaScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue.shade800,
+                    backgroundColor: const Color(0xFF8E24ED),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -526,7 +526,7 @@ class _MonitoreoMapaScreenState extends State<MonitoreoMapaScreen> {
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
-          Icon(icon, color: Colors.blue.shade700, size: 20),
+          Icon(icon, color: const Color(0xFF8E24ED), size: 20),
           const SizedBox(width: 12),
           Text('$label: ', style: const TextStyle(fontWeight: FontWeight.bold)),
           Expanded(child: Text(value, overflow: TextOverflow.ellipsis)),

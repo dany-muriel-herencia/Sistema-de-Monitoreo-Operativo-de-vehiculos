@@ -88,74 +88,115 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Centro de Control',
-          style: TextStyle(fontWeight: FontWeight.w800),
-        ),
-        flexibleSpace: Stack(
-          fit: StackFit.expand,
-          children: [
-            Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF1A5A65), Color(0xFF2E7D89)],
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(180),
+        child: Container(
+          padding: const EdgeInsets.only(top: 50, left: 20, right: 20),
+          decoration: const BoxDecoration(
+            color: Color(0xFF8E24ED),
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(32),
+              bottomRight: Radius.circular(32),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Icon(Icons.menu, color: Colors.white),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.notifications_none, color: Colors.white),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Panel de Control',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            ),
-            Opacity(
-              opacity: 0.32,
-              child: Image.network(
-                'https://images.unsplash.com/photo-1556122071-e404cb6f31de?auto=format&fit=crop&w=1400&q=80',
-                fit: BoxFit.cover,
+              const Text(
+                'Resumen operativo de la flota',
+                style: TextStyle(color: Colors.white70, fontSize: 16),
+              ),
+            ],
+          ),
+        ),
+      ),
+      body: Stack(
+        children: [
+          Container(color: const Color(0xFF8E24ED)),
+          Container(
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(32),
+                topRight: Radius.circular(32),
               ),
             ),
-          ],
-        ),
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          indicatorColor: Colors.white,
-          indicatorWeight: 3,
-          labelStyle: const TextStyle(fontWeight: FontWeight.w700),
-          tabs: const [
-            Tab(icon: Icon(Icons.person), text: 'Conductores'),
-            Tab(icon: Icon(Icons.directions_car), text: 'Vehículos'),
-            Tab(icon: Icon(Icons.route), text: 'Rutas'),
-            Tab(icon: Icon(Icons.map), text: 'Viajes'),
-            Tab(icon: Icon(Icons.track_changes), text: 'Monitoreo'),
-            Tab(icon: Icon(Icons.bar_chart), text: 'Reportes'),
-          ],
-        ),
-        actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _refreshAll),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => Navigator.of(context).pushReplacementNamed('/'),
+            child: ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(32),
+                topRight: Radius.circular(32),
+              ),
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildConductorList(),
+                  _buildVehiculoList(),
+                  _buildRutaList(),
+                  _buildViajeList(),
+                  _buildMonitoreoList(),
+                  _buildReportesView(),
+                ],
+              ),
+            ),
           ),
         ],
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFFE6F3F6), Color(0xFFF7FBFD)],
-            stops: [0.0, 0.55],
-          ),
-        ),
-        child: TabBarView(
-          controller: _tabController,
-          children: [
-            _buildConductorList(),
-            _buildVehiculoList(),
-            _buildRutaList(),
-            _buildViajeList(),
-            _buildMonitoreoList(),
-            _buildReportesView(),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, -5),
+            ),
           ],
+        ),
+        child: ClipRRect(
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(24),
+            topRight: Radius.circular(24),
+          ),
+          child: BottomNavigationBar(
+            currentIndex: _tabController.index,
+            onTap: (index) => _tabController.animateTo(index),
+            type: BottomNavigationBarType.fixed,
+            backgroundColor: Colors.white,
+            selectedItemColor: const Color(0xFF8E24ED),
+            unselectedItemColor: Colors.grey,
+            selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
+            items: const [
+              BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Personal'),
+              BottomNavigationBarItem(icon: Icon(Icons.directions_car), label: 'Flota'),
+              BottomNavigationBarItem(icon: Icon(Icons.route), label: 'Rutas'),
+              BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Planes'),
+              BottomNavigationBarItem(icon: Icon(Icons.track_changes), label: 'Vivo'),
+              BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Info'),
+            ],
+          ),
         ),
       ),
       floatingActionButton: (_tabController.index >= 4)
@@ -191,7 +232,7 @@ class _HomeScreenState extends State<HomeScreen>
               },
               label: Text(_getActionLabel()),
               icon: const Icon(Icons.add),
-              backgroundColor: const Color(0xFF0B5563),
+              backgroundColor: const Color(0xFF8E24ED),
               foregroundColor: Colors.white,
             ),
     );
@@ -208,14 +249,13 @@ class _HomeScreenState extends State<HomeScreen>
     return Container(
       margin: margin ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.97),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF0B5563).withOpacity(0.10)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0B5563).withOpacity(0.08),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -591,8 +631,8 @@ class _HomeScreenState extends State<HomeScreen>
                       SizedBox(
                         height: 140,
                         width: double.infinity,
-                        child: Image.network(
-                          'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?auto=format&fit=crop&w=1600&q=80',
+                        child: Image.asset(
+                          'assets/dashboard_bg.png',
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) =>
                               Container(color: const Color(0xFF0B5563)),

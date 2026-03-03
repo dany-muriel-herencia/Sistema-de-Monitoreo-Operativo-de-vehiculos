@@ -300,172 +300,278 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Hola, ${widget.user['nombre']}'),
-        backgroundColor: Colors.blue.shade700,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => Navigator.of(context).pushReplacementNamed('/'),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(160),
+        child: Container(
+          padding: const EdgeInsets.only(top: 50, left: 20, right: 20),
+          decoration: const BoxDecoration(
+            color: Color(0xFF8E24ED),
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(32),
+              bottomRight: Radius.circular(32),
+            ),
           ),
-        ],
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Icon(Icons.menu, color: Colors.white),
+                  IconButton(
+                    icon: const Icon(Icons.logout, color: Colors.white),
+                    onPressed: () => Navigator.of(context).pushReplacementNamed('/'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Hola, ${widget.user['nombre']}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const Text(
+                'Estado de tu jornada hoy',
+                style: TextStyle(color: Colors.white70, fontSize: 15),
+              ),
+            ],
+          ),
+        ),
       ),
-      body: RefreshIndicator(
-        onRefresh: _loadActiveTrip,
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : _activeViaje == null
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.assignment_turned_in, size: 64, color: Colors.grey),
-                        const SizedBox(height: 16),
-                        const Text('No tienes viajes asignados.', style: TextStyle(fontSize: 18, color: Colors.grey)),
-                        const SizedBox(height: 24),
-                        ElevatedButton(onPressed: _loadActiveTrip, child: const Text('Actualizar')),
-                      ],
-                    ),
-                  )
-                : Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: ListView( // Usar ListView para que el RefreshIndicator funcione bien
-                      children: [
-                        Card(
-                          elevation: 6,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              border: Border(
-                                left: BorderSide(
-                                  color: _activeViaje!.estado == 'EN_CURSO' ? Colors.green : Colors.orange, 
-                                  width: 8
-                                )
-                              )
-                            ),
-                            padding: const EdgeInsets.all(20.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    const Text('DETALLES DEL VIAJE', style: TextStyle(letterSpacing: 1.2, fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey)),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: _activeViaje!.estado == 'EN_CURSO' ? Colors.green.shade50 : Colors.orange.shade50,
-                                        borderRadius: BorderRadius.circular(4)
-                                      ),
-                                      child: Text(
-                                        _activeViaje!.estado,
-                                        style: TextStyle(
-                                          color: _activeViaje!.estado == 'EN_CURSO' ? Colors.green : Colors.orange,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                _buildDetailItem(Icons.tag, 'ID de Viaje', _activeViaje!.id),
-                                _buildDetailItem(Icons.directions_car, 'Placa Vehículo', _activeViaje!.vehiculoId),
-                                _buildDetailItem(Icons.map, 'Ruta Asignada', _rutaAsignada?.nombre ?? 'Sin ruta'),
-                                const SizedBox(height: 12),
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: OutlinedButton.icon(
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => DriverMapaScreen(
-                                            puntosRuta: _rutaAsignada?.puntos ?? [],
-                                            nombreRuta: _rutaAsignada?.nombre ?? '',
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                    icon: const Icon(Icons.map),
-                                    label: const Text('Ver mi ubicación en el Mapa'),
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: Colors.blue.shade700,
-                                      side: BorderSide(color: Colors.blue.shade700),
-                                      padding: const EdgeInsets.symmetric(vertical: 14),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-                        if (_isActionLoading)
-                          const Center(child: CircularProgressIndicator())
-                        else if (_activeViaje!.estado == 'PLANIFICADO')
-                          ElevatedButton.icon(
-                            onPressed: _iniciar,
-                            icon: const Icon(Icons.play_circle_fill, size: 32),
-                            label: const Text('COMENZAR VIAJE', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 20),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                          )
-                        else if (_activeViaje!.estado == 'EN_CURSO')
-                          Column(
+      body: Stack(
+        children: [
+          Container(color: const Color(0xFF8E24ED)),
+          Container(
+            decoration: const BoxDecoration(
+              color: Color(0xFFF8F9FE),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(32),
+                topRight: Radius.circular(32),
+              ),
+            ),
+            child: RefreshIndicator(
+              onRefresh: _loadActiveTrip,
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _activeViaje == null
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: Colors.blue.shade50,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Row(
-                                  children: [
-                                    Icon(Icons.gps_fixed, color: Colors.blue),
-                                    SizedBox(width: 12),
-                                    Expanded(child: Text('Monitoreo GPS real activo. Enviando ubicación automáticamente.', style: TextStyle(color: Colors.blue))),
-                                  ],
-                                ),
-                              ),
+                              const Icon(Icons.assignment_turned_in, size: 64, color: Colors.grey),
                               const SizedBox(height: 16),
-                              // Botón Reportar Incidencia
-                              SizedBox(
-                                width: double.infinity,
-                                child: OutlinedButton.icon(
-                                  onPressed: () => _reportarIncidencia(),
-                                  icon: const Icon(Icons.warning_amber_rounded, color: Colors.orange),
-                                  label: const Text('Reportar Incidencia', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
-                                  style: OutlinedButton.styleFrom(
-                                    side: const BorderSide(color: Colors.orange, width: 2),
-                                    padding: const EdgeInsets.symmetric(vertical: 14),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              ElevatedButton.icon(
-                                onPressed: _finalizar,
-                                icon: const Icon(Icons.check_circle, size: 32),
-                                label: const Text('FINALIZAR VIAJE', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.red,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 20),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                ),
-                              ),
+                              const Text('No tienes viajes asignados.', style: TextStyle(fontSize: 18, color: Colors.grey)),
+                              const SizedBox(height: 24),
+                              ElevatedButton(onPressed: _loadActiveTrip, child: const Text('Actualizar')),
                             ],
                           ),
-                      ],
-                    ),
-                  ),
+                        )
+                      : Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: ListView(
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(24),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.05),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                                      decoration: BoxDecoration(
+                                        color: _activeViaje!.estado == 'EN_CURSO' ? Colors.green.shade50 : Colors.orange.shade50,
+                                        borderRadius: const BorderRadius.only(
+                                          topLeft: Radius.circular(24),
+                                          topRight: Radius.circular(24),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            'DETALLES DEL VIAJE',
+                                            style: TextStyle(
+                                              letterSpacing: 1.2,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12,
+                                              color: _activeViaje!.estado == 'EN_CURSO' ? Colors.green.shade700 : Colors.orange.shade700,
+                                            ),
+                                          ),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: _activeViaje!.estado == 'EN_CURSO' ? Colors.green : Colors.orange,
+                                              borderRadius: BorderRadius.circular(20),
+                                            ),
+                                            child: Text(
+                                              _activeViaje!.estado,
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 11,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.all(20.0),
+                                      child: Column(
+                                        children: [
+                                          _buildDetailItem(Icons.tag, 'ID de Viaje', _activeViaje!.id),
+                                          _buildDetailItem(Icons.directions_car, 'Placa Vehículo', _activeViaje!.vehiculoId),
+                                          _buildDetailItem(Icons.map, 'Ruta Asignada', _rutaAsignada?.nombre ?? 'Sin ruta'),
+                                          const SizedBox(height: 12),
+                                          SizedBox(
+                                            width: double.infinity,
+                                            child: ElevatedButton.icon(
+                                              onPressed: () {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (_) => DriverMapaScreen(
+                                                      puntosRuta: _rutaAsignada?.puntos ?? [],
+                                                      nombreRuta: _rutaAsignada?.nombre ?? '',
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                              icon: const Icon(Icons.map_outlined),
+                                              label: const Text('Ver Mapa y Posición'),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: const Color(0xFF8E24ED).withOpacity(0.1),
+                                                foregroundColor: const Color(0xFF8E24ED),
+                                                elevation: 0,
+                                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 32),
+                              if (_isActionLoading)
+                                const Center(child: CircularProgressIndicator())
+                              else if (_activeViaje!.estado == 'PLANIFICADO')
+                                Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(20),
+                                    gradient: const LinearGradient(
+                                      colors: [Color(0xFF4CAF50), Color(0xFF2E7D32)],
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.green.withOpacity(0.3),
+                                        blurRadius: 12,
+                                        offset: const Offset(0, 6),
+                                      ),
+                                    ],
+                                  ),
+                                  child: ElevatedButton.icon(
+                                    onPressed: _iniciar,
+                                    icon: const Icon(Icons.play_arrow_rounded, size: 32),
+                                    label: const Text('COMENZAR VIAJE', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.transparent,
+                                      foregroundColor: Colors.white,
+                                      shadowColor: Colors.transparent,
+                                      padding: const EdgeInsets.symmetric(vertical: 20),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                    ),
+                                  ),
+                                )
+                              else if (_activeViaje!.estado == 'EN_CURSO')
+                                Column(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        border: Border.all(color: Colors.blue.shade100),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Icon(Icons.gps_fixed, color: Colors.blue),
+                                          const SizedBox(width: 12),
+                                          const Expanded(
+                                            child: Text(
+                                              'Monitoreo GPS activo. Tu ubicación se envía automáticamente.',
+                                              style: TextStyle(color: Colors.blue, fontWeight: FontWeight.w500),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 20),
+                                    // Botón Reportar Incidencia
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: OutlinedButton.icon(
+                                        onPressed: () => _reportarIncidencia(),
+                                        icon: const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+                                        label: const Text('Reportar Incidencia', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
+                                        style: OutlinedButton.styleFrom(
+                                          side: const BorderSide(color: Colors.orange, width: 2),
+                                          padding: const EdgeInsets.symmetric(vertical: 16),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Container(
+                                      width: double.infinity,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(20),
+                                        gradient: const LinearGradient(
+                                          colors: [Color(0xFFE53935), Color(0xFFC62828)],
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.red.withOpacity(0.3),
+                                            blurRadius: 12,
+                                            offset: const Offset(0, 6),
+                                          ),
+                                        ],
+                                      ),
+                                      child: ElevatedButton.icon(
+                                        onPressed: _finalizar,
+                                        icon: const Icon(Icons.stop_rounded, size: 32),
+                                        label: const Text('FINALIZAR VIAJE', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.transparent,
+                                          foregroundColor: Colors.white,
+                                          shadowColor: Colors.transparent,
+                                          padding: const EdgeInsets.symmetric(vertical: 20),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                            ],
+                          ),
+                        ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -475,7 +581,7 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
       padding: const EdgeInsets.only(bottom: 12.0),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: Colors.blue.shade700),
+          Icon(icon, size: 20, color: const Color(0xFF8E24ED)),
           const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,

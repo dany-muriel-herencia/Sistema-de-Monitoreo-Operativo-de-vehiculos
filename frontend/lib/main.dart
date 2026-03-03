@@ -10,56 +10,64 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const seedColor = Color(0xFF0B5563);
+    const seedColor = Color(0xFF8E24ED);
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Sistema de Monitoreo',
       theme: ThemeData(
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: seedColor),
-        scaffoldBackgroundColor: const Color(0xFFF5F8FA),
-        fontFamily: 'Trebuchet MS',
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: seedColor,
+          primary: seedColor,
+          secondary: const Color(0xFFFF8C00),
+        ),
+        scaffoldBackgroundColor: Colors.white,
+        fontFamily: 'Outfit', // A more modern font
         appBarTheme: const AppBarTheme(
           elevation: 0,
-          centerTitle: false,
-          backgroundColor: Colors.transparent,
+          centerTitle: true,
+          backgroundColor: Color(0xFF8E24ED),
           foregroundColor: Colors.white,
         ),
         cardTheme: CardThemeData(
-          color: Colors.white.withOpacity(0.92),
-          elevation: 0,
+          color: Colors.white,
+          elevation: 4,
+          shadowColor: Colors.black.withOpacity(0.1),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(24),
           ),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             elevation: 0,
+            backgroundColor: const Color(0xFF8E24ED),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
             ),
           ),
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: Colors.white.withOpacity(0.9),
+          fillColor: Colors.grey[100],
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
+            horizontal: 20,
+            vertical: 16,
           ),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide.none,
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide(
-              color: const Color(0xFF0B5563).withOpacity(0.14),
+              color: seedColor.withOpacity(0.1),
             ),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: Color(0xFF0B5563), width: 1.5),
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: Color(0xFF8E24ED), width: 1.5),
           ),
         ),
       ),

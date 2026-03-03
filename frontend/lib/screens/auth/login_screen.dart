@@ -70,18 +70,18 @@ class _LoginScreenState extends State<LoginScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          Image.network(
-            'https://images.unsplash.com/photo-1519003722824-194d4455a60c?auto=format&fit=crop&w=1920&q=80',
+          Image.asset(
+            'assets/login_bg.png',
             fit: BoxFit.cover,
             errorBuilder: (context, error, stackTrace) =>
-                Container(color: const Color(0xFF0E3B43)),
+                Container(color: const Color(0xFF8E24ED)),
           ),
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Color(0xC00B1E2B), Color(0xEE0C5563)],
+                colors: [Color(0xC0512DA8), Color(0xEE8E24ED)],
               ),
             ),
           ),
@@ -195,7 +195,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                   ),
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF0B5563),
+                                    backgroundColor: const Color(0xFF8E24ED),
                                     foregroundColor: Colors.white,
                                   ),
                                 ),
