@@ -14,8 +14,6 @@ import '../screens/admin/monitoreo_mapa_screen.dart';
 import '../screens/admin/crear_ruta_mapa_screen.dart';
 import '../models/ruta.dart';
 import '../services/ruta_service.dart';
-import '../widgets/add_ruta_dialog.dart';
-
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -24,7 +22,8 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final _conductorService = ConductorService();
   final _vehiculoService = VehiculoService();
@@ -90,10 +89,37 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Admin Dashboard'),
+        title: const Text(
+          'Centro de Control',
+          style: TextStyle(fontWeight: FontWeight.w800),
+        ),
+        flexibleSpace: Stack(
+          fit: StackFit.expand,
+          children: [
+            Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF08343D), Color(0xFF0B5563)],
+                ),
+              ),
+            ),
+            Opacity(
+              opacity: 0.20,
+              child: Image.network(
+                'https://images.unsplash.com/photo-1556122071-e404cb6f31de?auto=format&fit=crop&w=1400&q=80',
+                fit: BoxFit.cover,
+              ),
+            ),
+          ],
+        ),
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
+          indicatorColor: Colors.white,
+          indicatorWeight: 3,
+          labelStyle: const TextStyle(fontWeight: FontWeight.w700),
           tabs: const [
             Tab(icon: Icon(Icons.person), text: 'Conductores'),
             Tab(icon: Icon(Icons.directions_car), text: 'Vehículos'),
@@ -102,58 +128,72 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             Tab(icon: Icon(Icons.track_changes), text: 'Monitoreo'),
             Tab(icon: Icon(Icons.bar_chart), text: 'Reportes'),
           ],
-
         ),
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _refreshAll),
           IconButton(
-            icon: const Icon(Icons.logout), 
+            icon: const Icon(Icons.logout),
             onPressed: () => Navigator.of(context).pushReplacementNamed('/'),
           ),
         ],
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildConductorList(),
-          _buildVehiculoList(),
-          _buildRutaList(),
-          _buildViajeList(),
-          _buildMonitoreoList(),
-          _buildReportesView(),
-        ],
-
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF0E3B43), Color(0xFFF5F8FA)],
+            stops: [0.0, 0.42],
+          ),
+        ),
+        child: TabBarView(
+          controller: _tabController,
+          children: [
+            _buildConductorList(),
+            _buildVehiculoList(),
+            _buildRutaList(),
+            _buildViajeList(),
+            _buildMonitoreoList(),
+            _buildReportesView(),
+          ],
+        ),
       ),
-      floatingActionButton: (_tabController.index >= 4) ? null : FloatingActionButton.extended(
-        onPressed: () async {
-          bool? result;
+      floatingActionButton: (_tabController.index >= 4)
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: () async {
+                bool? result;
 
-          if (_tabController.index == 2) {
-            // Rutas: abrir pantalla del mapa para dibujar
-            result = await Navigator.push<bool>(
-              context,
-              MaterialPageRoute(builder: (_) => const CrearRutaMapaScreen()),
-            );
-          } else {
-            // Conductores, Vehículos, Viajes: dialog normal
-            Widget dialog;
-            if (_tabController.index == 0) {
-              dialog = const AddConductorDialog();
-            } else if (_tabController.index == 1) {
-              dialog = const AddVehiculoDialog();
-            } else {
-              dialog = const AsignarVehiculoDialog();
-            }
-            result = await showDialog<bool>(
-              context: context,
-              builder: (context) => dialog,
-            );
-          }
-          if (result == true) _refreshAll();
-        },
-        label: Text(_getActionLabel()),
-        icon: const Icon(Icons.add),
-      ),
+                if (_tabController.index == 2) {
+                  // Rutas: abrir pantalla del mapa para dibujar
+                  result = await Navigator.push<bool>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const CrearRutaMapaScreen(),
+                    ),
+                  );
+                } else {
+                  // Conductores, Vehículos, Viajes: dialog normal
+                  Widget dialog;
+                  if (_tabController.index == 0) {
+                    dialog = const AddConductorDialog();
+                  } else if (_tabController.index == 1) {
+                    dialog = const AddVehiculoDialog();
+                  } else {
+                    dialog = const AsignarVehiculoDialog();
+                  }
+                  result = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => dialog,
+                  );
+                }
+                if (result == true) _refreshAll();
+              },
+              label: Text(_getActionLabel()),
+              icon: const Icon(Icons.add),
+              backgroundColor: const Color(0xFF0B5563),
+              foregroundColor: Colors.white,
+            ),
     );
   }
 
@@ -164,28 +204,52 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     return 'Asignar / Planificar';
   }
 
+  Widget _buildPanel({required Widget child, EdgeInsetsGeometry? margin}) {
+    return Container(
+      margin: margin ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.92),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF0B5563).withOpacity(0.10)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0B5563).withOpacity(0.08),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
 
   // --- MÉTODOS DE CONSTRUCCIÓN DE LISTAS (Conductores, Vehículos, Viajes, Monitoreo igual que antes) ---
-  
+
   Widget _buildConductorList() {
     return FutureBuilder<List<Conductor>>(
       future: _conductoresFuture,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+        if (snapshot.connectionState == ConnectionState.waiting)
+          return const Center(child: CircularProgressIndicator());
         if (snapshot.hasError) return _buildError(snapshot.error.toString());
         final items = snapshot.data ?? [];
-        if (items.isEmpty) return const Center(child: Text('No hay registros.'));
+        if (items.isEmpty)
+          return const Center(child: Text('No hay registros.'));
 
         return ListView.builder(
           itemCount: items.length,
           itemBuilder: (context, index) {
             final item = items[index];
-            return Card(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            return _buildPanel(
               child: ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: item.disponible ? Colors.green.shade100 : Colors.red.shade100,
-                  child: Icon(Icons.person, color: item.disponible ? Colors.green : Colors.red),
+                  backgroundColor: item.disponible
+                      ? Colors.green.shade100
+                      : Colors.red.shade100,
+                  child: Icon(
+                    Icons.person,
+                    color: item.disponible ? Colors.green : Colors.red,
+                  ),
                 ),
                 title: Text(item.nombre),
                 subtitle: Text('ID: ${item.id}\nLicencia: ${item.licencia}'),
@@ -197,7 +261,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       onPressed: () async {
                         final result = await showDialog<bool>(
                           context: context,
-                          builder: (context) => AddConductorDialog(conductor: item),
+                          builder: (context) =>
+                              AddConductorDialog(conductor: item),
                         );
                         if (result == true) _refreshAll();
                       },
@@ -220,22 +285,28 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     return FutureBuilder<List<Vehiculo>>(
       future: _vehiculosFuture,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+        if (snapshot.connectionState == ConnectionState.waiting)
+          return const Center(child: CircularProgressIndicator());
         if (snapshot.hasError) return _buildError(snapshot.error.toString());
         final items = snapshot.data ?? [];
-        if (items.isEmpty) return const Center(child: Text('No hay registros.'));
+        if (items.isEmpty)
+          return const Center(child: Text('No hay registros.'));
 
         return ListView.builder(
           itemCount: items.length,
           itemBuilder: (context, index) {
             final item = items[index];
             bool available = item.estado.toUpperCase() == 'DISPONIBLE';
-            return Card(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            return _buildPanel(
               child: ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: available ? Colors.blue.shade100 : Colors.orange.shade100,
-                  child: Icon(Icons.directions_car, color: available ? Colors.blue : Colors.orange),
+                  backgroundColor: available
+                      ? Colors.blue.shade100
+                      : Colors.orange.shade100,
+                  child: Icon(
+                    Icons.directions_car,
+                    color: available ? Colors.blue : Colors.orange,
+                  ),
                 ),
                 title: Text('${item.marca} ${item.modelo}'),
                 subtitle: Text('Placa: ${item.placa}\nEstado: ${item.estado}'),
@@ -247,7 +318,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       onPressed: () async {
                         final result = await showDialog<bool>(
                           context: context,
-                          builder: (context) => AddVehiculoDialog(vehiculo: item),
+                          builder: (context) =>
+                              AddVehiculoDialog(vehiculo: item),
                         );
                         if (result == true) _refreshAll();
                       },
@@ -260,7 +332,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ),
               ),
             );
-
           },
         );
       },
@@ -271,44 +342,53 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     return FutureBuilder<List<Ruta>>(
       future: _rutasFuture,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+        if (snapshot.connectionState == ConnectionState.waiting)
+          return const Center(child: CircularProgressIndicator());
         if (snapshot.hasError) return _buildError(snapshot.error.toString());
         final items = snapshot.data ?? [];
-        if (items.isEmpty) return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.route, size: 64, color: Colors.grey),
-              const SizedBox(height: 12),
-              const Text('No hay rutas creadas.', style: TextStyle(color: Colors.grey)),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: () async {
-                  final result = await Navigator.push<bool>(
-                    context,
-                    MaterialPageRoute(builder: (_) => const CrearRutaMapaScreen()),
-                  );
-                  if (result == true) _refreshAll();
-                },
-                icon: const Icon(Icons.add_location_alt),
-                label: const Text('Crear primera ruta'),
-              ),
-            ],
-          ),
-        );
+        if (items.isEmpty)
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.route, size: 64, color: Colors.grey),
+                const SizedBox(height: 12),
+                const Text(
+                  'No hay rutas creadas.',
+                  style: TextStyle(color: Colors.grey),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    final result = await Navigator.push<bool>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const CrearRutaMapaScreen(),
+                      ),
+                    );
+                    if (result == true) _refreshAll();
+                  },
+                  icon: const Icon(Icons.add_location_alt),
+                  label: const Text('Crear primera ruta'),
+                ),
+              ],
+            ),
+          );
 
         return ListView.builder(
           itemCount: items.length,
           itemBuilder: (context, index) {
             final item = items[index];
-            return Card(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            return _buildPanel(
               child: ListTile(
                 leading: CircleAvatar(
                   backgroundColor: Colors.blue.shade100,
                   child: Icon(Icons.route, color: Colors.blue.shade700),
                 ),
-                title: Text(item.nombre, style: const TextStyle(fontWeight: FontWeight.bold)),
+                title: Text(
+                  item.nombre,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
                 subtitle: Text(
                   '${item.distanciaTotal.toStringAsFixed(1)} km  •  ${item.duracionEstimadaMinutos} min  •  ${item.puntos.length} puntos',
                 ),
@@ -323,7 +403,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         final result = await Navigator.push<bool>(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => CrearRutaMapaScreen(rutaExistente: item),
+                            builder: (_) =>
+                                CrearRutaMapaScreen(rutaExistente: item),
                           ),
                         );
                         if (result == true) _refreshAll();
@@ -344,36 +425,39 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-
   Widget _buildViajeList() {
     return FutureBuilder<List<Viaje>>(
       future: _viajesFuture,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+        if (snapshot.connectionState == ConnectionState.waiting)
+          return const Center(child: CircularProgressIndicator());
         if (snapshot.hasError) return _buildError(snapshot.error.toString());
         final items = snapshot.data ?? [];
-        if (items.isEmpty) return const Center(child: Text('No hay viajes planificados.'));
+        if (items.isEmpty)
+          return const Center(child: Text('No hay viajes planificados.'));
 
         return ListView.builder(
           itemCount: items.length,
           itemBuilder: (context, index) {
             final item = items[index];
-            return Card(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            return _buildPanel(
               child: ListTile(
                 leading: const CircleAvatar(child: Icon(Icons.map)),
                 title: Text('Viaje #${item.id}'),
-                subtitle: Text('Estado: ${item.estado}\nConductor: ${item.conductorId}\nVehículo: ${item.vehiculoId}'),
+                subtitle: Text(
+                  'Estado: ${item.estado}\nConductor: ${item.conductorId}\nVehículo: ${item.vehiculoId}',
+                ),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (item.estado == 'PLANIFICADO') 
+                    if (item.estado == 'PLANIFICADO')
                       IconButton(
                         icon: const Icon(Icons.edit, color: Colors.blue),
                         onPressed: () async {
                           final result = await showDialog<bool>(
                             context: context,
-                            builder: (context) => AsignarVehiculoDialog(viaje: item),
+                            builder: (context) =>
+                                AsignarVehiculoDialog(viaje: item),
                           );
                           if (result == true) _refreshAll();
                         },
@@ -386,7 +470,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ),
               ),
             );
-
           },
         );
       },
@@ -397,10 +480,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     return FutureBuilder<List<dynamic>>(
       future: _monitoreoFuture,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+        if (snapshot.connectionState == ConnectionState.waiting)
+          return const Center(child: CircularProgressIndicator());
         if (snapshot.hasError) return _buildError(snapshot.error.toString());
         final items = snapshot.data ?? [];
-        if (items.isEmpty) return const Center(child: Text('No hay viajes activos en este momento.'));
+        if (items.isEmpty)
+          return const Center(
+            child: Text('No hay viajes activos en este momento.'),
+          );
 
         return Column(
           children: [
@@ -411,7 +498,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => MonitoreoMapaScreen(monitoreoData: items),
+                      builder: (context) =>
+                          MonitoreoMapaScreen(monitoreoData: items),
                     ),
                   );
                 },
@@ -430,11 +518,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 itemBuilder: (context, index) {
                   final item = items[index];
                   final ubicacion = item['ultimaUbicacion'];
-                  
-                  return Card(
-                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+
+                  return _buildPanel(
                     child: ExpansionTile(
-                      leading: const Icon(Icons.satellite_alt, color: Colors.blue),
+                      leading: const Icon(
+                        Icons.satellite_alt,
+                        color: Colors.blue,
+                      ),
                       title: Text('Vehículo: ${item['placa']}'),
                       subtitle: Text('Conductor: ${item['conductor']}'),
                       children: [
@@ -446,15 +536,22 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                               if (ubicacion != null) ...[
                                 Text('Latitud: ${ubicacion['latitud']}'),
                                 Text('Longitud: ${ubicacion['longitud']}'),
-                                Text('Velocidad: ${ubicacion['velocidad']} km/h'),
-                                Text('Último reporte: ${ubicacion['timestamp']}'),
+                                Text(
+                                  'Velocidad: ${ubicacion['velocidad']} km/h',
+                                ),
+                                Text(
+                                  'Último reporte: ${ubicacion['timestamp']}',
+                                ),
                               ] else
-                                const Text('Esperando primer reporte de GPS...', style: TextStyle(color: Colors.orange)),
+                                const Text(
+                                  'Esperando primer reporte de GPS...',
+                                  style: TextStyle(color: Colors.orange),
+                                ),
                               const SizedBox(height: 8),
                               Text('ID Viaje: ${item['idViaje']}'),
                             ],
                           ),
-                        )
+                        ),
                       ],
                     ),
                   );
@@ -471,9 +568,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     return FutureBuilder<Map<String, dynamic>>(
       future: _reportesFuture,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+        if (snapshot.connectionState == ConnectionState.waiting)
+          return const Center(child: CircularProgressIndicator());
         if (snapshot.hasError) return _buildError(snapshot.error.toString());
-        
+
         final data = snapshot.data!;
         final stats = data['estadisticas'];
         final ranking = data['rankingConductores'] as List;
@@ -484,7 +582,50 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Resumen de Flota', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              _buildPanel(
+                margin: const EdgeInsets.only(bottom: 16),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Stack(
+                    children: [
+                      SizedBox(
+                        height: 140,
+                        width: double.infinity,
+                        child: Image.network(
+                          'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?auto=format&fit=crop&w=1600&q=80',
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(color: const Color(0xFF0B5563)),
+                        ),
+                      ),
+                      Container(
+                        height: 140,
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                            colors: [Color(0xBB082E38), Color(0x33082E38)],
+                          ),
+                        ),
+                        padding: const EdgeInsets.all(16),
+                        alignment: Alignment.bottomLeft,
+                        child: const Text(
+                          'Vision general de la flota',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const Text(
+                'Resumen de Flota',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 16),
               GridView.count(
                 crossAxisCount: 2,
@@ -494,34 +635,73 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 mainAxisSpacing: 10,
                 crossAxisSpacing: 10,
                 children: [
-                   _buildStatCard('Total Viajes', stats['totalViajes'].toString(), Icons.history, Colors.blue),
-                   _buildStatCard('En Ruta', stats['vehiculosEnRuta'].toString(), Icons.local_shipping, Colors.orange),
-                   _buildStatCard('KM Totales', stats['kilometrajeFlota'].toString(), Icons.speed, Colors.green),
-                   _buildStatCard('Conductores', stats['totalConductores'].toString(), Icons.people, Colors.purple),
+                  _buildStatCard(
+                    'Total Viajes',
+                    stats['totalViajes'].toString(),
+                    Icons.history,
+                    Colors.blue,
+                  ),
+                  _buildStatCard(
+                    'En Ruta',
+                    stats['vehiculosEnRuta'].toString(),
+                    Icons.local_shipping,
+                    Colors.orange,
+                  ),
+                  _buildStatCard(
+                    'KM Totales',
+                    stats['kilometrajeFlota'].toString(),
+                    Icons.speed,
+                    Colors.green,
+                  ),
+                  _buildStatCard(
+                    'Conductores',
+                    stats['totalConductores'].toString(),
+                    Icons.people,
+                    Colors.purple,
+                  ),
                 ],
               ),
               const SizedBox(height: 24),
-              const Text('Top 5 Conductores', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text(
+                'Top 5 Conductores',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 8),
-              Card(
+              _buildPanel(
                 child: Column(
-                  children: ranking.map<Widget>((c) => ListTile(
-                    leading: const Icon(Icons.star, color: Colors.amber),
-                    title: Text(c['nombre']),
-                    trailing: Text('${c['viajes']} viajes', style: const TextStyle(fontWeight: FontWeight.bold)),
-                  )).toList(),
+                  children: ranking
+                      .map<Widget>(
+                        (c) => ListTile(
+                          leading: const Icon(Icons.star, color: Colors.amber),
+                          title: Text(c['nombre']),
+                          trailing: Text(
+                            '${c['viajes']} viajes',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      )
+                      .toList(),
                 ),
               ),
               const SizedBox(height: 24),
-              const Text('Recientes', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text(
+                'Recientes',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 8),
-              Card(
+              _buildPanel(
                 child: Column(
-                  children: recientes.map<Widget>((v) => ListTile(
-                    title: Text('Viaje #${v['id']} - ${v['placa']}'),
-                    subtitle: Text('Estado: ${v['estado']}'),
-                    trailing: Text(v['fecha']?.toString().split('T')[0] ?? ''),
-                  )).toList(),
+                  children: recientes
+                      .map<Widget>(
+                        (v) => ListTile(
+                          title: Text('Viaje #${v['id']} - ${v['placa']}'),
+                          subtitle: Text('Estado: ${v['estado']}'),
+                          trailing: Text(
+                            v['fecha']?.toString().split('T')[0] ?? '',
+                          ),
+                        ),
+                      )
+                      .toList(),
                 ),
               ),
               const SizedBox(height: 32),
@@ -531,7 +711,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   onPressed: () {
                     final url = _reporteService.getExportUrl();
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Descargando reporte desde: $url')),
+                      SnackBar(
+                        content: Text('Descargando reporte desde: $url'),
+                      ),
                     );
                     // Como estamos en web, lo más sencillo es abrir la URL en otra pestaña
                     // El navegador detectará que es un attachment y lo descargará.
@@ -553,11 +735,19 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Card(
       color: color.withOpacity(0.1),
       elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: color.withOpacity(0.2))),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: color.withOpacity(0.2)),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(
@@ -565,8 +755,18 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           children: [
             Icon(icon, color: color),
             const SizedBox(height: 8),
-            Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
-            Text(title, style: TextStyle(fontSize: 12, color: color.withOpacity(0.8))),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+            Text(
+              title,
+              style: TextStyle(fontSize: 12, color: color.withOpacity(0.8)),
+            ),
           ],
         ),
       ),
@@ -582,9 +782,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           children: [
             const Icon(Icons.error_outline, color: Colors.red, size: 48),
             const SizedBox(height: 16),
-            Text('Error de conexión con el backend: $error', textAlign: TextAlign.center),
+            Text(
+              'Error de conexión con el backend: $error',
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 16),
-            ElevatedButton(onPressed: _refreshAll, child: const Text('Reintentar')),
+            ElevatedButton(
+              onPressed: _refreshAll,
+              child: const Text('Reintentar'),
+            ),
           ],
         ),
       ),
@@ -598,7 +804,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         title: const Text('Eliminar'),
         content: Text('¿Eliminar a ${item.nombre}?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('No')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('No'),
+          ),
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
@@ -609,7 +818,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 _showErrorSnackBar(e.toString());
               }
             },
-            child: const Text('Sí, eliminar', style: TextStyle(color: Colors.red)),
+            child: const Text(
+              'Sí, eliminar',
+              style: TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
@@ -623,7 +835,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         title: const Text('Eliminar'),
         content: Text('¿Eliminar vehículo ${item.placa}?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('No')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('No'),
+          ),
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
@@ -634,7 +849,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 _showErrorSnackBar(e.toString());
               }
             },
-            child: const Text('Sí, eliminar', style: TextStyle(color: Colors.red)),
+            child: const Text(
+              'Sí, eliminar',
+              style: TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
@@ -648,7 +866,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         title: const Text('Eliminar Ruta'),
         content: Text('¿Eliminar la ruta "${item.nombre}"?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('No')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('No'),
+          ),
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
@@ -659,7 +880,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 _showErrorSnackBar(e.toString());
               }
             },
-            child: const Text('Sí, eliminar', style: TextStyle(color: Colors.red)),
+            child: const Text(
+              'Sí, eliminar',
+              style: TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
@@ -673,7 +897,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         title: const Text('Eliminar Viaje'),
         content: Text('¿Eliminar el viaje #${item.id}?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('No')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('No'),
+          ),
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
@@ -684,14 +911,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 _showErrorSnackBar(e.toString());
               }
             },
-            child: const Text('Sí, eliminar', style: TextStyle(color: Colors.red)),
+            child: const Text(
+              'Sí, eliminar',
+              style: TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
     );
   }
-
-
 
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(

@@ -138,6 +138,9 @@ class _DriverMapaScreenState extends State<DriverMapaScreen> {
             options: MapOptions(
               initialCenter: center,
               initialZoom: 15.0,
+              interactionOptions: const InteractionOptions(
+                flags: InteractiveFlag.all,
+              ),
               onMapEvent: (event) {
                 // Si el usuario mueve el mapa manualmente, desactiva el seguimiento
                 if (event is MapEventScrollWheelZoom ||

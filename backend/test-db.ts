@@ -1,4 +1,5 @@
 import { createPool } from 'mysql2/promise';
+import * as fs from 'fs';
 
 async function test() {
     const pool = createPool({
@@ -8,9 +9,8 @@ async function test() {
         database: 'app_unidades_mobiles',
     });
     const [a] = await pool.query('SELECT * FROM tipo_alerta');
-    console.log('ALERTAS:', a);
     const [e] = await pool.query('SELECT * FROM tipo_evento');
-    console.log('EVENTOS:', e);
+    fs.writeFileSync('out2.json', JSON.stringify({ ALERTAS: a, EVENTOS: e }, null, 2), 'utf-8');
     process.exit(0);
 }
 test();

@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../services/ruta_service.dart';
@@ -21,6 +23,8 @@ class _CrearRutaMapaScreenState extends State<CrearRutaMapaScreen> {
   final List<LatLng> _puntos = [];
   bool _isSatellite = false;
   bool _isLoading = false;
+  bool _isSearching = false;
+  final _searchController = TextEditingController();
 
   // Perú como centro por defecto
   static const LatLng _defaultCenter = LatLng(-12.046374, -77.042793);
@@ -41,7 +45,35 @@ class _CrearRutaMapaScreenState extends State<CrearRutaMapaScreen> {
   @override
   void dispose() {
     _nombreController.dispose();
+    _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _buscarDireccion(String query) async {
+    if (query.isEmpty) return;
+    setState(() => _isSearching = true);
+    try {
+      final url = Uri.parse('https://nominatim.openstreetmap.org/search?q=${Uri.encodeComponent(query)}&format=json&limit=1');
+      final response = await http.get(url, headers: {'User-Agent': 'FlutterFlotaApp/1.0'});
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data is List && data.isNotEmpty) {
+          final lat = double.parse(data[0]['lat']);
+          final lon = double.parse(data[0]['lon']);
+          final point = LatLng(lat, lon);
+          
+          _mapController.move(point, 16.0);
+          _showSnack('Ubicación encontrada: ${data[0]['display_name']}', Colors.green);
+        } else {
+          _showSnack('No se encontró la dirección.', Colors.orange);
+        }
+      }
+    } catch (e) {
+      _showSnack('Error en la búsqueda.', Colors.red);
+    } finally {
+      setState(() => _isSearching = false);
+    }
   }
 
   /// Calcula la distancia total entre puntos consecutivos en km
@@ -158,6 +190,9 @@ class _CrearRutaMapaScreenState extends State<CrearRutaMapaScreen> {
               initialCenter: center,
               initialZoom: 13.0,
               onTap: _onMapTap,
+              interactionOptions: const InteractionOptions(
+                flags: InteractiveFlag.all,
+              ),
             ),
             children: [
               TileLayer(
@@ -232,40 +267,90 @@ class _CrearRutaMapaScreenState extends State<CrearRutaMapaScreen> {
             top: 12,
             left: 12,
             right: 12,
-            child: Card(
-              elevation: 6,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: _nombreController,
+            child: Column(
+              children: [
+                // Barra de Búsqueda de Direcciones
+                Card(
+                  elevation: 6,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: TextField(
+                      controller: _searchController,
                       decoration: InputDecoration(
-                        hintText: 'Nombre de la ruta...',
-                        prefixIcon: const Icon(Icons.route, color: Colors.blue),
-                        contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        isDense: true,
+                        hintText: 'Buscar calle, ciudad o vivienda...',
+                        border: InputBorder.none,
+                        icon: const Icon(Icons.search, color: Colors.blue),
+                        suffixIcon: _isSearching 
+                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                          : IconButton(
+                              icon: const Icon(Icons.clear), 
+                              onPressed: () => _searchController.clear()
+                            ),
                       ),
+                      onSubmitted: _buscarDireccion,
                     ),
-                    if (_puntos.isNotEmpty) ...[
-                      const SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          _statChip(Icons.location_on, '${_puntos.length} puntos', Colors.blue),
-                          _statChip(Icons.straighten, '${distancia.toStringAsFixed(2)} km', Colors.orange),
-                          _statChip(Icons.schedule, '$duracion min', Colors.green),
-                        ],
-                      ),
-                    ],
-                  ],
+                  ),
                 ),
-              ),
+                const SizedBox(height: 8),
+                Card(
+                  elevation: 6,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextField(
+                          controller: _nombreController,
+                          decoration: InputDecoration(
+                            hintText: 'Nombre de la ruta...',
+                            prefixIcon: const Icon(Icons.route, color: Colors.blue),
+                            contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            isDense: true,
+                          ),
+                        ),
+                        if (_puntos.isNotEmpty) ...[
+                          const SizedBox(height: 10),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              _statChip(Icons.location_on, '${_puntos.length} puntos', Colors.blue),
+                              _statChip(Icons.straighten, '${distancia.toStringAsFixed(2)} km', Colors.orange),
+                              _statChip(Icons.schedule, '$duracion min', Colors.green),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          Positioned(
+            right: 12,
+            bottom: 120,
+            child: Column(
+              children: [
+                FloatingActionButton.small(
+                  heroTag: 'zoom_in',
+                  backgroundColor: Colors.white,
+                  onPressed: () => _mapController.move(_mapController.camera.center, _mapController.camera.zoom + 1),
+                  child: const Icon(Icons.add, color: Colors.blue),
+                ),
+                const SizedBox(height: 8),
+                FloatingActionButton.small(
+                  heroTag: 'zoom_out',
+                  backgroundColor: Colors.white,
+                  onPressed: () => _mapController.move(_mapController.camera.center, _mapController.camera.zoom - 1),
+                  child: const Icon(Icons.remove, color: Colors.blue),
+                ),
+              ],
             ),
           ),
 

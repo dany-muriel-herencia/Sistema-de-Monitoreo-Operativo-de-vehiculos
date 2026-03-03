@@ -37,6 +37,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var promise_1 = require("mysql2/promise");
+var fs = require("fs");
 function test() {
     return __awaiter(this, void 0, void 0, function () {
         var pool, a, e;
@@ -52,11 +53,10 @@ function test() {
                     return [4 /*yield*/, pool.query('SELECT * FROM tipo_alerta')];
                 case 1:
                     a = (_a.sent())[0];
-                    console.log('ALERTAS:', a);
                     return [4 /*yield*/, pool.query('SELECT * FROM tipo_evento')];
                 case 2:
                     e = (_a.sent())[0];
-                    console.log('EVENTOS:', e);
+                    fs.writeFileSync('out2.json', JSON.stringify({ ALERTAS: a, EVENTOS: e }, null, 2), 'utf-8');
                     process.exit(0);
                     return [2 /*return*/];
             }

@@ -1,0 +1,38 @@
+{
+  "ALERTAS": [
+    {
+      "id": 1,
+      "nombre": "DESVIACION_RUTA"
+    },
+    {
+      "id": 3,
+      "nombre": "PARADA_PROLOGADA"
+    },
+    {
+      "id": 2,
+      "nombre": "RETRASO"
+    }
+  ],
+  "EVENTOS": [
+    {
+      "id": 4,
+      "nombre": "FIN_PAUSA"
+    },
+    {
+      "id": 2,
+      "nombre": "FIN_VIAJE"
+    },
+    {
+      "id": 5,
+      "nombre": "INCIDENCIA"
+    },
+    {
+      "id": 3,
+      "nombre": "INICIO_PAUSA"
+    },
+    {
+      "id": 1,
+      "nombre": "INICIO_VIAJE"
+    }
+  ]
+}
