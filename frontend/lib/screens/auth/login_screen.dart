@@ -5,6 +5,7 @@ import '../driver/driver_home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+  
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -14,9 +15,30 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _authService = AuthService();
+  int _cantidadDeIntentos = 0;
+  bool _mostrarPassword = false;
+  bool _estaBloqueado = false;
+
+  bool _verificarBloqueo() {
+    if (_cantidadDeIntentos >= 4) {
+      _estaBloqueado = true;
+    }
+    return _estaBloqueado;
+  }
+
   bool _isLoading = false;
 
   void _login() async {
+    if (_verificarBloqueo()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Acceso bloqueado por demasiados intentos fallidos.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
       final result = await _authService.login(
@@ -31,10 +53,12 @@ class _LoginScreenState extends State<LoginScreen> {
         if (!mounted) return;
 
         if (rol == 'admin') {
+          _cantidadDeIntentos = 0; // Reiniciar intentos al tener éxito
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (context) => const HomeScreen()),
           );
         } else if (rol == 'conductor') {
+          _cantidadDeIntentos = 0; // Reiniciar intentos al tener éxito
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
               builder: (context) => DriverHomeScreen(user: user),
@@ -49,6 +73,10 @@ class _LoginScreenState extends State<LoginScreen> {
       final errorMessage = e.toString().contains('Exception:') 
           ? e.toString().substring(e.toString().indexOf(':') + 1).trim()
           : e.toString();
+          
+      setState(() {
+        _cantidadDeIntentos++;
+      });
           
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -163,11 +191,28 @@ class _LoginScreenState extends State<LoginScreen> {
                               const SizedBox(height: 14),
                               TextField(
                                 controller: _passwordController,
-                                obscureText: true,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Contraseña',
-                                    prefixIcon: Icon(Icons.lock_outline),
+                                obscureText: !_mostrarPassword,
+                                enabled: !_verificarBloqueo(),
+                                decoration: InputDecoration(
+                                  labelText: 'Contraseña',
+                                  prefixIcon: const Icon(Icons.lock_outline),
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      _mostrarPassword
+                                          ? Icons.visibility
+                                          : Icons.visibility_off,
+                                      color: Colors.grey,
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        _mostrarPassword = !_mostrarPassword;
+                                      });
+                                    },
                                   ),
+                                  errorText: _verificarBloqueo()
+                                      ? 'Máximo de intentos alcanzado'
+                                      : null,
+                                ),
                               ),
                               const SizedBox(height: 18),
                               SizedBox(
