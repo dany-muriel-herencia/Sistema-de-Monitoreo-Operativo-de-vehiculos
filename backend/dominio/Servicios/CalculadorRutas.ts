@@ -13,9 +13,7 @@ export class CalculadorRutas {
         };
     }
 
-    /**
-     * Calcula desviaciones y sugiere el siguiente punto de la ruta.
-     */
+
     calcularDesviacion(ruta: Ruta, ubicacionActual: UbicacionGPS): { desviacion: number; siguientePunto: PuntoGeo | null } {
         const desviacion = ruta.calcularDesviacion(ubicacionActual);
         const siguientePunto = ruta.obtenerSiguienteUbicacion(ubicacionActual);

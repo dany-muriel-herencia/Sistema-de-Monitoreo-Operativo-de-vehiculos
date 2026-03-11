@@ -75,7 +75,7 @@ class IncidenciaService {
     }
   }
 
-  /// Obtiene los catálogos de enums desde el backend.
+
   Future<Map<String, dynamic>> obtenerEnums() async {
     final response = await http.get(Uri.parse(ApiConstants.enums));
     if (response.statusCode == 200) {

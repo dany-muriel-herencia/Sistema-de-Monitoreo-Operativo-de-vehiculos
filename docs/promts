@@ -1,12 +1,79 @@
-1.    Explícame cómo estructurar mi proyecto de Sistema de Monitoreo Operativo de Vehículos usando arquitectura por capas (dominio, aplicación e infraestructura) en Node.js con TypeScript.
+Explícame cómo estructurar mi proyecto de Sistema de Monitoreo Operativo de Vehículos usando arquitectura por capas (dominio, aplicación e infraestructura) en Node.js con TypeScript.
 
-2.    Muéstrame cómo implementar los repositorios (UsuarioRepository, ConductorRepository y VehiculoRepository) usando MySQL y mysql2 en TypeScript.
+Muéstrame cómo implementar los repositorios (UsuarioRepository, ConductorRepository y VehiculoRepository) usando MySQL y mysql2 en TypeScript.
 
-3.    Explícame cómo se comunican la interfaz, los casos de uso, el dominio y los repositorios dentro de una arquitectura limpia.
+Explícame cómo se comunican la interfaz, los casos de uso, el dominio y los repositorios dentro de una arquitectura limpia.
 
-4.    Tengo este error en TypeScript (Argument of type 'string' is not assignable to parameter of type 'number'), ¿cómo lo soluciono correctamente en mis entidades y clases heredadas?
+Tengo este error en TypeScript (Argument of type 'string' is not assignable to parameter of type 'number'), ¿cómo lo soluciono correctamente en mis entidades y clases heredadas?
 
-5.    Dame el archivo tsconfig.json correcto para ejecutar mi proyecto Node.js con TypeScript usando ts-node sin errores de módulos
+Dame el archivo tsconfig.json correcto para ejecutar mi proyecto Node.js con TypeScript usando ts-node sin errores de módulos.
 
+Cómo integrar Google Maps en Flutter (Dart) para mostrar ubicaciones en tiempo real.
 
-    
+Cómo pedir permisos de GPS en Android e iOS usando Flutter (geolocator + permission_handler).
+
+Cómo enviar ubicación en tiempo real desde Flutter hacia un backend usando HTTP o WebSocket.
+
+Cómo dibujar rutas reales en el mapa usando Polyline en Flutter.
+
+Cómo actualizar dinámicamente una Polyline sin reconstruir el mapa completo.
+
+Cómo usar OpenStreetMap con flutter_map como alternativa gratuita a Google Maps.
+
+Comparación técnica entre Google Maps y OpenStreetMap para un sistema de flotas.
+
+Cómo hacer público mi backend Node.js en internet (Render, Railway u otra plataforma gratuita).
+
+Cómo desplegar mi frontend Flutter Web en Firebase Hosting o Vercel.
+
+Cómo configurar CORS correctamente en Express para permitir conexión entre frontend y backend.
+
+Cómo conectar mi frontend Flutter con una API pública en producción.
+
+Cómo subir mi base de datos MySQL a la nube para que no dependa de mi entorno local.
+
+Cómo estructurar endpoints para seguimiento de ubicación en tiempo real.
+
+Revisión y mejora de mi diagrama UML de clases para el sistema de flotas.
+
+Cómo modelar correctamente la relación entre Conductor, Vehículo y Asignación.
+
+Cómo implementar la eliminación de asignaciones sin afectar las entidades relacionadas.
+
+Diferencia entre clases abstractas y herencia aplicada a mi proyecto.
+
+Cómo crear correctamente la base de datos MySQL para usuarios, conductores, vehículos y asignaciones.
+
+Qué son los CRUD y cuántos necesito por cada tabla del sistema.
+
+Cómo visualizar los datos guardados en MySQL (Laragon u otro entorno).
+
+Cómo estructurar tablas con herencia usando roles (administrador, conductor).
+
+Cómo implementar casos de uso sin redefinir las entidades del dominio.
+
+Cómo conectar la interfaz con los casos de uso en arquitectura limpia.
+
+Dónde implementar la función login: en la entidad, servicio o caso de uso.
+
+Cómo estructurar services y rutas dentro de mi backend.
+
+Cómo solucionar el error “prompt is not defined” en Node.js.
+
+Cómo ejecutar correctamente TypeScript con ts-node sin errores.
+
+Cómo redactar estructuradamente la problemática del proyecto para presentación.
+
+Cómo organizar mi proyecto en Trello y gestionar tareas.
+
+Qué significa “to-do” dentro del flujo de desarrollo.
+
+Cómo implementar repositorios paso a paso en mi sistema.
+
+Cómo pasar de datos simulados a datos reales en tiempo real en mi aplicación.
+
+Cómo implementar visualización de rutas dinámicas en el mapa para transporte.
+
+Cómo enviar y recibir coordenadas en tiempo real usando WebSocket.
+
+Cómo desplegar conjuntamente backend, frontend y base de datos en producción.

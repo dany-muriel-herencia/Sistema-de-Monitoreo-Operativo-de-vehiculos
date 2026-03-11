@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import '../models/conductor.dart';
 import '../models/vehiculo.dart';
-import '../models/viaje.dart';
+import '../models/ruta.dart';
 import '../services/conductor_service.dart';
 import '../services/vehiculo_service.dart';
 import '../services/viaje_service.dart';
+import '../services/ruta_service.dart';
 import '../models/viaje.dart' as model;
 
 class AsignarVehiculoDialog extends StatefulWidget {
@@ -19,13 +20,15 @@ class _AsignarVehiculoDialogState extends State<AsignarVehiculoDialog> {
   final _viajeService = ViajeService();
   final _conductorService = ConductorService();
   final _vehiculoService = VehiculoService();
+  final _rutaService = RutaService();
 
   Conductor? _selectedConductor;
   Vehiculo? _selectedVehiculo;
-  final _idRutaController = TextEditingController(text: '1'); 
+  Ruta? _selectedRuta;
   
   List<Conductor> _conductores = [];
   List<Vehiculo> _vehiculos = [];
+  List<Ruta> _rutas = [];
   bool _isLoadingData = true;
   bool _isSubmitting = false;
 
@@ -40,20 +43,22 @@ class _AsignarVehiculoDialogState extends State<AsignarVehiculoDialog> {
       final results = await Future.wait([
         _conductorService.obtenerConductores(),
         _vehiculoService.obtenerVehiculos(),
+        _rutaService.obtenerRutas(),
       ]);
       
       setState(() {
-        final allConductores = results[0] as List<Conductor>;
-        final allVehiculos = results[1] as List<Vehiculo>;
+        _conductores = results[0] as List<Conductor>;
+        _vehiculos = results[1] as List<Vehiculo>;
+        _rutas = results[2] as List<Ruta>;
 
-        // Al editar, queremos que el conductor/vehículo actual aparezca en la lista aunque no esté "disponible"
-        _conductores = allConductores.where((c) => c.disponible || (widget.viaje != null && c.id == widget.viaje!.conductorId)).toList();
-        _vehiculos = allVehiculos.where((v) => v.estado.toUpperCase() == 'DISPONIBLE' || (widget.viaje != null && v.placa == widget.viaje!.vehiculoId)).toList();
+        // Filtrar conductores y vehículos disponibles (o el actual si editamos)
+        _conductores = _conductores.where((c) => c.disponible || (widget.viaje != null && c.id == widget.viaje!.conductorId)).toList();
+        _vehiculos = _vehiculos.where((v) => v.estado.toUpperCase() == 'DISPONIBLE' || (widget.viaje != null && v.placa == widget.viaje!.vehiculoId)).toList();
         
         if (widget.viaje != null) {
           _selectedConductor = _conductores.where((c) => c.id == widget.viaje!.conductorId).firstOrNull;
           _selectedVehiculo = _vehiculos.where((v) => v.placa == widget.viaje!.vehiculoId).firstOrNull;
-          // Si no los encuentra por ID/Placa (porque son textos en el viaje actual), intentamos matchear
+          _selectedRuta = _rutas.where((r) => r.id == widget.viaje!.rutaId).firstOrNull;
         }
 
         _isLoadingData = false;
@@ -68,24 +73,30 @@ class _AsignarVehiculoDialogState extends State<AsignarVehiculoDialog> {
   }
 
   void _submit() async {
-    if (_selectedConductor == null || _selectedVehiculo == null) return;
+    if (_selectedConductor == null || _selectedVehiculo == null || _selectedRuta == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, completa todos los campos'), backgroundColor: Colors.orange),
+      );
+      return;
+    }
 
     setState(() => _isSubmitting = true);
     try {
       if (widget.viaje != null) {
-        // Editar
+        // Editar asignación (actualmente solo permite cambiar conductor/vehículo según código previo, 
+        // pero podemos pasar la ruta también si fuera necesario, aunque el backend suele pedir solo conductor y placa en este endpoint específico)
         await _viajeService.actualizarAsignacion(
           widget.viaje!.id, 
           _selectedConductor!.id, 
           _selectedVehiculo!.placa
         );
       } else {
-        // Nuevo
+        // Nuevo Viaje (Planificar)
         await _viajeService.planificarViaje({
           'id': DateTime.now().millisecondsSinceEpoch.toString(),
           'idConductor': _selectedConductor!.id,
           'placa': _selectedVehiculo!.placa,
-          'idRuta': _idRutaController.text,
+          'idRuta': _selectedRuta!.id,
         });
       }
 
@@ -106,40 +117,44 @@ class _AsignarVehiculoDialogState extends State<AsignarVehiculoDialog> {
     final isEditing = widget.viaje != null;
 
     return AlertDialog(
-      title: Text(isEditing ? 'Editar Asignación' : 'Asignar Vehículo y Conductor'),
+      title: Text(isEditing ? 'Editar Asignación' : 'Planificar Nuevo Viaje'),
       content: _isLoadingData 
         ? const SizedBox(height: 100, child: Center(child: CircularProgressIndicator()))
-        : Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              DropdownButtonFormField<Conductor>(
-                value: _selectedConductor,
-                decoration: const InputDecoration(labelText: 'Conductor'),
-                items: _conductores.map((c) => DropdownMenuItem(
-                  value: c,
-                  child: Text(c.nombre),
-                )).toList(),
-                onChanged: (v) => setState(() => _selectedConductor = v),
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<Vehiculo>(
-                value: _selectedVehiculo,
-                decoration: const InputDecoration(labelText: 'Vehículo'),
-                items: _vehiculos.map((v) => DropdownMenuItem(
-                  value: v,
-                  child: Text('${v.marca} - ${v.placa}'),
-                )).toList(),
-                onChanged: (v) => setState(() => _selectedVehiculo = v),
-              ),
-              if (!isEditing) ...[
+        : SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DropdownButtonFormField<Conductor>(
+                  value: _selectedConductor,
+                  decoration: const InputDecoration(labelText: 'Conductor', prefixIcon: Icon(Icons.person)),
+                  items: _conductores.map((c) => DropdownMenuItem(
+                    value: c,
+                    child: Text(c.nombre),
+                  )).toList(),
+                  onChanged: (v) => setState(() => _selectedConductor = v),
+                ),
                 const SizedBox(height: 16),
-                TextField(
-                  controller: _idRutaController,
-                  decoration: const InputDecoration(labelText: 'ID de Ruta'),
-                  keyboardType: TextInputType.number,
+                DropdownButtonFormField<Vehiculo>(
+                  value: _selectedVehiculo,
+                  decoration: const InputDecoration(labelText: 'Vehículo', prefixIcon: Icon(Icons.local_shipping)),
+                  items: _vehiculos.map((v) => DropdownMenuItem(
+                    value: v,
+                    child: Text('${v.marca} - ${v.placa}'),
+                  )).toList(),
+                  onChanged: (v) => setState(() => _selectedVehiculo = v),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<Ruta>(
+                  value: _selectedRuta,
+                  decoration: const InputDecoration(labelText: 'Ruta de Transporte', prefixIcon: Icon(Icons.route)),
+                  items: _rutas.map((r) => DropdownMenuItem(
+                    value: r,
+                    child: Text(r.nombre),
+                  )).toList(),
+                  onChanged: (v) => setState(() => _selectedRuta = v),
                 ),
               ],
-            ],
+            ),
           ),
       actions: [
         TextButton(
@@ -147,14 +162,19 @@ class _AsignarVehiculoDialogState extends State<AsignarVehiculoDialog> {
           child: const Text('Cancelar'),
         ),
         ElevatedButton(
-          onPressed: _isSubmitting || _selectedConductor == null || _selectedVehiculo == null 
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF8E24ED),
+            foregroundColor: Colors.white,
+          ),
+          onPressed: _isSubmitting || _selectedConductor == null || _selectedVehiculo == null || _selectedRuta == null
             ? null 
             : _submit,
           child: _isSubmitting 
-            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) 
-            : Text(isEditing ? 'Guardar Cambios' : 'Asignar'),
+            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) 
+            : Text(isEditing ? 'Guardar Cambios' : 'Planificar Viaje'),
         ),
       ],
     );
   }
 }
+
