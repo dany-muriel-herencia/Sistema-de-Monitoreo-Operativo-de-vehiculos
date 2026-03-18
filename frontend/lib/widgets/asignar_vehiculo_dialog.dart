@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import '../models/conductor.dart';
 import '../models/vehiculo.dart';
 import '../models/ruta.dart';
@@ -153,6 +155,88 @@ class _AsignarVehiculoDialogState extends State<AsignarVehiculoDialog> {
                   )).toList(),
                   onChanged: (v) => setState(() => _selectedRuta = v),
                 ),
+                if (_selectedRuta != null) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.timer, color: Colors.blue, size: 20),
+                            const SizedBox(width: 8),
+                            Text('Tiempo Estimado (ETA): ${_selectedRuta!.duracionEstimadaMinutos} min', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            const Icon(Icons.straighten, color: Colors.blue, size: 20),
+                            const SizedBox(width: 8),
+                            Text('Distancia total: ${_selectedRuta!.distanciaTotal} km', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    height: 250,
+                    width: MediaQuery.of(context).size.width * 0.7,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: FlutterMap(
+                        key: ValueKey(_selectedRuta!.id),
+                        options: MapOptions(
+                          initialCenter: _selectedRuta!.puntos.isNotEmpty 
+                            ? LatLng(_selectedRuta!.puntos.first.latitud, _selectedRuta!.puntos.first.longitud) 
+                            : const LatLng(-18.0146, -70.2536),
+                          initialZoom: 13.0,
+                        ),
+                        children: [
+                          TileLayer(
+                            urlTemplate: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
+                            subdomains: const ['a', 'b', 'c'],
+                            userAgentPackageName: 'com.flota.monitoreo',
+                          ),
+                          if (_selectedRuta!.puntos.isNotEmpty)
+                            PolylineLayer(
+                              polylines: [
+                                Polyline(
+                                  points: (_selectedRuta!.puntos.toList()..sort((a,b) => a.orden.compareTo(b.orden))).map((p) => LatLng(p.latitud, p.longitud)).toList(),
+                                  color: const Color(0xFF8E24ED),
+                                  strokeWidth: 4.0,
+                                ),
+                              ],
+                            ),
+                          MarkerLayer(
+                            markers: _selectedRuta!.puntos.map((p) => Marker(
+                              point: LatLng(p.latitud, p.longitud),
+                              width: 24,
+                              height: 24,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.orange,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white, width: 2),
+                                ),
+                                child: Center(
+                                  child: Text(p.orden.toString(), style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                                ),
+                              ),
+                            )).toList(),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

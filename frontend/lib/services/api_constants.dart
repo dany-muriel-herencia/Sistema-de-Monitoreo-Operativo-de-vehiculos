@@ -1,6 +1,10 @@
 class ApiConstants {
-  // static const String baseUrl = 'http://10.0.2.2:3000/api'; // Para el emulador de Android
-  static const String baseUrl = 'http://127.0.0.1:3000/api'; // Para web, Windows o iOS
+  // ⚠️ IMPORTANTE: Si cambia la IP del PC, actualiza la línea activa.
+  // Ejecuta `ipconfig` en la PC para ver tu IP actual de la red LAN.
+  //
+  // static const String baseUrl = 'http://10.0.2.2:3000/api';      // Emulador Android (AVD)
+  static const String baseUrl = 'http://192.168.18.28:3000/api'; // IP LAN actual (dispositivo físico/red WiFi)
+  // static const String baseUrl = 'http://127.0.0.1:3000/api';     // Web, Windows desktop o iOS local
   
   static const String login = '$baseUrl/login';
   static const String conductores = '$baseUrl/conductores';

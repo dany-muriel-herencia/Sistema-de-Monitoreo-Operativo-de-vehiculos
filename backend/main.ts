@@ -24,12 +24,13 @@ app.get("/", (req, res) => {
 });
 
 // Inicio del servidor
-app.listen(PORT, () => {
+app.listen(Number(PORT), '0.0.0.0', () => {
     console.log(`
     ==========================================
     ✅ SERVIDOR INICIADO CORRECTAMENTE
     📍 Puerto: ${PORT}
-    🌐 URL: http://localhost:${PORT}/api
+    🌐 URL local: http://localhost:${PORT}/api
+    🌐 URL LAN: http://192.168.18.8:${PORT}/api
     ==========================================
     `);
 });

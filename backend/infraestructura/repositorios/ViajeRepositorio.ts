@@ -9,10 +9,10 @@ export class ViajeRepositorio implements IViajeRepositorio {
     // ─── Mapea una fila de BD → instancia Viaje ──────────────────────────────
     private mapearVehiculoFila(row: any): Viaje {
         return new Viaje(
-            row.id.toString(),
-            row.conductor_id.toString(),
-            row.placa_vehiculo || row.vehiculo_id.toString(), // Mandamos la PLACA si viene, si no el ID
-            row.ruta_id.toString(),
+            row.id?.toString() || '',
+            row.conductor_id?.toString() || '',
+            row.placa_vehiculo || row.vehiculo_id?.toString() || '',
+            row.ruta_id?.toString() || '',
             row.estado_nombre as EstadoViaje,
             row.fecha_hora_inicio ? new Date(row.fecha_hora_inicio) : null,
             row.fecha_hora_fin ? new Date(row.fecha_hora_fin) : null

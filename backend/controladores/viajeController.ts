@@ -26,6 +26,7 @@ export class ViajeController {
                     id: typeof raw.getId === 'function' ? raw.getId() : raw.id,
                     conductor_id: typeof raw.getIdConductor === 'function' ? raw.getIdConductor() : raw.conductor_id,
                     vehiculo_id: typeof raw.getIdVehiculo === 'function' ? raw.getIdVehiculo() : raw.vehiculo_id,
+                    ruta_id: typeof raw.getIdRuta === 'function' ? raw.getIdRuta() : raw.ruta_id,
                     estado: typeof raw.getEstado === 'function' ? raw.getEstado() : raw.estado
                 }
             });
@@ -71,6 +72,7 @@ export class ViajeController {
                     id: typeof raw.getId === 'function' ? raw.getId() : raw.id,
                     conductor_id: typeof raw.getIdConductor === 'function' ? raw.getIdConductor() : raw.conductor_id,
                     vehiculo_id: typeof raw.getIdVehiculo === 'function' ? raw.getIdVehiculo() : raw.vehiculo_id,
+                    ruta_id: typeof raw.getIdRuta === 'function' ? raw.getIdRuta() : raw.ruta_id,
                     estado: typeof raw.getEstado === 'function' ? raw.getEstado() : raw.estado,
                     fecha_hora_inicio: typeof raw.getFechaInicio === 'function' ? raw.getFechaInicio() : raw.fecha_hora_inicio,
                     fecha_hora_fin: typeof raw.getFechaFin === 'function' ? raw.getFechaFin() : raw.fecha_hora_fin

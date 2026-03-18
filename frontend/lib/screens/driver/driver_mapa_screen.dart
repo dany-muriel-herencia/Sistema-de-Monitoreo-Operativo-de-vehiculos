@@ -35,12 +35,84 @@ class _DriverMapaScreenState extends State<DriverMapaScreen> {
   bool _isSearching = false;
   final _searchController = TextEditingController();
 
+  List<LatLng> _rutaOsrm = [];
+  bool _calculandoRuta = false;
+
   static const LatLng _defaultCenter = LatLng(-18.0146, -70.2536); // Tacna, Perú
 
   @override
   void initState() {
     super.initState();
     _iniciarGPS();
+    _calcularRutaOsrm();
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  //  OSRM: Trazado por calles reales
+  // ═══════════════════════════════════════════════════════════════
+
+  List<LatLng> _decodificarPolyline6(String encoded) {
+    final List<LatLng> result = [];
+    int index = 0;
+    final int len = encoded.length;
+    int lat = 0, lng = 0;
+    while (index < len) {
+      int b, shift = 0, r = 0;
+      do {
+        b = encoded.codeUnitAt(index++) - 63;
+        r |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      lat += (r & 1) != 0 ? ~(r >> 1) : r >> 1;
+      shift = 0; r = 0;
+      do {
+        b = encoded.codeUnitAt(index++) - 63;
+        r |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      lng += (r & 1) != 0 ? ~(r >> 1) : r >> 1;
+      result.add(LatLng(lat / 1e6, lng / 1e6));
+    }
+    return result;
+  }
+
+  Future<void> _calcularRutaOsrm() async {
+    if (widget.puntosRuta.length < 2) return;
+    setState(() => _calculandoRuta = true);
+
+    try {
+      final coords = widget.puntosRuta
+          .map((p) => '${p.longitud},${p.latitud}')
+          .join(';');
+
+      final uri = Uri.parse(
+        'https://router.project-osrm.org/route/v1/driving/$coords'
+        '?overview=full&geometries=polyline6&steps=false',
+      );
+
+      final response = await http
+          .get(uri)
+          .timeout(const Duration(seconds: 15));
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body) as Map<String, dynamic>;
+        if (data['code'] == 'Ok') {
+          final geometry = data['routes'][0]['geometry'] as String;
+          final puntos = _decodificarPolyline6(geometry);
+          setState(() {
+            _rutaOsrm = puntos;
+            _calculandoRuta = false;
+          });
+          return;
+        }
+      }
+    } catch (e) {
+      debugPrint('[OSRM Driver] error=$e');
+    }
+    
+    if (mounted) setState(() => _calculandoRuta = false);
   }
 
   @override
@@ -55,7 +127,7 @@ class _DriverMapaScreenState extends State<DriverMapaScreen> {
     setState(() => _isSearching = true);
     try {
       final url = Uri.parse('https://nominatim.openstreetmap.org/search?q=${Uri.encodeComponent(query)}&format=json&limit=1');
-      final response = await http.get(url, headers: {'User-Agent': 'FlutterFlotaApp/1.0'});
+      final response = await http.get(url);
       
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -221,13 +293,34 @@ class _DriverMapaScreenState extends State<DriverMapaScreen> {
               ),
 
               // Línea de la ruta asignada
-              if (_puntosLatLng.length >= 2)
+              if (_rutaOsrm.isNotEmpty)
                 PolylineLayer(
                   polylines: [
+                    // Halo decorativo
+                    Polyline(
+                      points: _rutaOsrm,
+                      color: Colors.orange.withValues(alpha: 0.3),
+                      strokeWidth: 10.0,
+                    ),
+                    // Línea principal por calle
+                    Polyline(
+                      points: _rutaOsrm,
+                      color: Colors.orange.shade700,
+                      strokeWidth: 5.0,
+                      borderColor: Colors.white,
+                      borderStrokeWidth: 1.5,
+                    ),
+                  ],
+                )
+              else if (_puntosLatLng.length >= 2)
+                PolylineLayer(
+                  polylines: [
+                    // Fallback (línea recta punteada) mientras carga o si falla
                     Polyline(
                       points: _puntosLatLng,
-                      color: Colors.orange.shade600,
-                      strokeWidth: 5.0,
+                      color: Colors.orange.shade600.withValues(alpha: 0.5),
+                      strokeWidth: 4.0,
+                      isDotted: true,
                     ),
                   ],
                 ),
@@ -425,7 +518,7 @@ class _DriverMapaScreenState extends State<DriverMapaScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               decoration: BoxDecoration(
                 color: Colors.white,
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 12)],
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 12)],
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
               ),
               child: SafeArea(

@@ -49,7 +49,7 @@ class _MonitoreoMapaScreenState extends State<MonitoreoMapaScreen> {
     setState(() => _isSearching = true);
     try {
       final url = Uri.parse('https://nominatim.openstreetmap.org/search?q=${Uri.encodeComponent(query)}&format=json&limit=1');
-      final response = await http.get(url, headers: {'User-Agent': 'FlutterFlotaApp/1.0'});
+      final response = await http.get(url);
       
       if (response.statusCode == 200) {
         final data = json.decode(response.body);

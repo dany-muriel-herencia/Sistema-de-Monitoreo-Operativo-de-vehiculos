@@ -12,8 +12,10 @@ import '../widgets/add_vehiculo_dialog.dart';
 import '../widgets/asignar_vehiculo_dialog.dart';
 import '../screens/admin/monitoreo_mapa_screen.dart';
 import '../screens/admin/crear_ruta_mapa_screen.dart';
+import '../screens/admin/planificador_ruta_osrm_screen.dart';
 import '../models/ruta.dart';
 import '../services/ruta_service.dart';
+import '../widgets/rutas_overview_mapa_widget.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -42,6 +44,9 @@ class _HomeScreenState extends State<HomeScreen>
 
   // Timer para actualización en tiempo real del monitoreo
   Timer? _monitoreoTimer;
+
+  // Ruta seleccionada en la vista general
+  String? _selectedRutaId;
 
   @override
   void initState() {
@@ -410,12 +415,51 @@ class _HomeScreenState extends State<HomeScreen>
                   icon: const Icon(Icons.add_location_alt),
                   label: const Text('Crear primera ruta'),
                 ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const PlanificadorRutaOsrmScreen(),
+                    ),
+                  ),
+                  icon: const Icon(Icons.alt_route, color: Color(0xFF1565C0)),
+                  label: const Text(
+                    'Planificar con OSRM',
+                    style: TextStyle(color: Color(0xFF1565C0)),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFF1565C0)),
+                  ),
+                ),
               ],
             ),
           );
 
         return Column(
           children: [
+            // Botón planificador OSRM
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: ElevatedButton.icon(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const PlanificadorRutaOsrmScreen(),
+                  ),
+                ),
+                icon: const Icon(Icons.alt_route),
+                label: const Text('Planificador de Ruta OSRM  (ETA + calles reales)'),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 44),
+                  backgroundColor: const Color(0xFF1565C0),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
             // Mapa con todas las rutas
             Container(
               height: 250,
@@ -424,62 +468,7 @@ class _HomeScreenState extends State<HomeScreen>
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10)],
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(24),
-                child: FlutterMap(
-                  options: MapOptions(
-                    initialCenter: items.isNotEmpty && items[0].puntos.isNotEmpty
-                        ? LatLng(items[0].puntos[0].latitud, items[0].puntos[0].longitud)
-                        : const LatLng(-18.0146, -70.2536), // Tacna, Perú
-                    initialZoom: 12.0,
-                  ),
-                  children: [
-                    TileLayer(
-                      urlTemplate: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
-                      subdomains: const ['a', 'b', 'c'],
-                    ),
-                    // Dibujar TODAS las polilíneas de las rutas
-                    PolylineLayer(
-                      polylines: items.map((ruta) {
-                        return Polyline(
-                          points: ruta.puntos.map((p) => LatLng(p.latitud, p.longitud)).toList(),
-                          color: _generateColor(ruta.id),
-                          strokeWidth: 4.0,
-                        );
-                      }).toList(),
-                    ),
-                    // Marcadores de DESTINO de cada ruta
-                    MarkerLayer(
-                      markers: items.where((r) => r.puntos.isNotEmpty).map((ruta) {
-                        final destination = ruta.puntos.last;
-                        return Marker(
-                          point: LatLng(destination.latitud, destination.longitud),
-                          width: 80,
-                          height: 80,
-                          child: Column(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: _generateColor(ruta.id),
-                                  borderRadius: BorderRadius.circular(4),
-                                  border: Border.all(color: Colors.white, width: 1),
-                                ),
-                                child: Text(
-                                  ruta.nombre,
-                                  style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              Icon(Icons.flag, color: _generateColor(ruta.id), size: 24),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ],
-                ),
-              ),
+              child: RutasOverviewMapaWidget(rutas: items, selectedRutaId: _selectedRutaId),
             ),
             
             // Lista de rutas debajo
@@ -492,8 +481,15 @@ class _HomeScreenState extends State<HomeScreen>
                   final routeColor = _generateColor(item.id);
                   return _buildPanel(
                     child: ListTile(
+                      onTap: () {
+                        setState(() {
+                          _selectedRutaId = item.id;
+                        });
+                      },
+                      selected: _selectedRutaId == item.id,
+                      selectedTileColor: routeColor.withValues(alpha: 0.1),
                       leading: CircleAvatar(
-                        backgroundColor: routeColor.withOpacity(0.1),
+                        backgroundColor: routeColor.withValues(alpha: 0.1),
                         child: Icon(Icons.route, color: routeColor),
                       ),
                       title: Text(
