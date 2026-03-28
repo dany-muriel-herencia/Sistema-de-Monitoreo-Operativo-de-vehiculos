@@ -30,7 +30,7 @@ app.listen(Number(PORT), '0.0.0.0', () => {
     ✅ SERVIDOR INICIADO CORRECTAMENTE
     📍 Puerto: ${PORT}
     🌐 URL local: http://localhost:${PORT}/api
-    🌐 URL LAN: http://192.168.18.8:${PORT}/api
+    🌐 URL LAN: http://192.168.18.28:${PORT}/api
     ==========================================
     `);
 });
